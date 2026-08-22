@@ -1,0 +1,27 @@
+services:
+
+  sqlserver:
+
+    image: mcr.microsoft.com/mssql/server:2022-latest
+
+    container_name: sistema-climatico-sql
+
+    environment:
+
+      ACCEPT_EULA: "Y"
+
+      MSSQL_SA_PASSWORD: "SistemaClima2026!"
+
+    ports:
+
+      - "1434:1433"
+
+    volumes:
+
+      - sqlserver_data:/var/opt/mssql
+
+    restart: unless-stopped
+
+volumes:
+
+  sqlserver_data:

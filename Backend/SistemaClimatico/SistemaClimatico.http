@@ -1,0 +1,6 @@
+@SistemaClimatico_HostAddress = http://localhost:5206
+
+GET {{SistemaClimatico_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
