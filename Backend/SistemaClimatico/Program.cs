@@ -9,6 +9,9 @@ builder.Services.AddDbContext<SistemaClimaticoContext>(options =>
         builder.Configuration.GetConnectionString("SistemaClimatico")
     ));
 
+// Controladores (API REST)
+builder.Services.AddControllers();
+
 // OpenAPI
 builder.Services.AddOpenApi();
 
@@ -21,6 +24,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapControllers();
 
 // Prueba de conexión con la base de datos
 app.MapGet("/db-test", async (SistemaClimaticoContext db) =>
