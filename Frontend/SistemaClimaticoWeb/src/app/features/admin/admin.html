@@ -1,0 +1,69 @@
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+  <div>
+    <div class="sc-display" style="font-size:15px;">Administracion</div>
+    <div style="font-size:11.5px; color:var(--sc-text-muted);">{{ sensores().length }} sensores registrados</div>
+  </div>
+  <button class="sc-btn sc-btn-primary" (click)="abierto.set(!abierto())">
+    {{ abierto() ? 'Cancelar' : '+ Agregar sensor' }}
+  </button>
+</div>
+
+@if (abierto()) {
+  <form [formGroup]="form" (ngSubmit)="guardar()" class="sc-card" style="margin-bottom:16px;">
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; align-items:end;">
+      <div>
+        <label class="sc-label">Nombre</label>
+        <input class="sc-input" formControlName="nombre" placeholder="Sensor Puente Norte" />
+      </div>
+      <div>
+        <label class="sc-label">Tipo</label>
+        <select class="sc-select" formControlName="tipo">
+          @for (t of tipos; track t) { <option [value]="t">{{ t }}</option> }
+        </select>
+      </div>
+      <div>
+        <label class="sc-label">Unidad de medida</label>
+        <input class="sc-input" formControlName="unidadMedida" placeholder="C, %, km/h, mm, m" />
+      </div>
+      <div>
+        <label class="sc-label">Ubicacion</label>
+        <input class="sc-input" formControlName="ubicacion" placeholder="Sector 3 - Puente" />
+      </div>
+    </div>
+    @if (error()) {
+      <div style="color:var(--sc-rojo); font-size:12px; margin-top:10px;">{{ error() }}</div>
+    }
+    <button class="sc-btn sc-btn-primary" type="submit" [disabled]="guardando()" style="margin-top:12px;">
+      {{ guardando() ? 'Guardando...' : 'Guardar sensor' }}
+    </button>
+  </form>
+}
+
+<div class="sc-card" style="padding:0; overflow:hidden;">
+  <table class="sc-table">
+    <thead>
+      <tr><th>Sensor</th><th>Tipo</th><th>Unidad</th><th>Ubicacion</th><th>Estado</th><th>Accion</th></tr>
+    </thead>
+    <tbody>
+      @for (s of sensores(); track s.idSensor) {
+        <tr>
+          <td>{{ s.nombre }}</td>
+          <td>{{ s.tipo }}</td>
+          <td>{{ s.unidadMedida }}</td>
+          <td style="color:var(--sc-text-muted);">{{ s.ubicacion || '-' }}</td>
+          <td>
+            <span class="sc-pill" [class]="s.activo ? 'sc-pill-Verde' : ''" [style.color]="s.activo ? '' : 'var(--sc-text-faint)'">
+              {{ s.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td><button class="sc-btn" (click)="activarDesactivar(s)">{{ s.activo ? 'Desactivar' : 'Activar' }}</button></td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+<div style="margin-top:14px; font-size:11.5px; color:var(--sc-text-faint);">
+  "Reiniciar sistema de monitoreo" y "Bitacora de acciones" quedan pendientes:
+  todavia no existe ese endpoint en el backend.
+</div>

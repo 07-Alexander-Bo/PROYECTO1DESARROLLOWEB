@@ -1,0 +1,25 @@
+<div class="sc-display" style="font-size:15px; margin-bottom:14px;">Historial de eventos</div>
+
+@if (cargando()) {
+  <div style="color:var(--sc-text-muted);">Cargando historial...</div>
+} @else {
+  <div class="sc-card" style="padding:0; overflow:hidden;">
+    <table class="sc-table">
+      <thead>
+        <tr><th>Fecha</th><th>Fenomeno</th><th>Descripcion</th></tr>
+      </thead>
+      <tbody>
+        @if (eventos().length === 0) {
+          <tr><td colspan="3" style="text-align:center; color:var(--sc-text-muted);">Aun no hay eventos registrados.</td></tr>
+        }
+        @for (h of eventos(); track h.idEvento) {
+          <tr>
+            <td class="sc-mono" style="color:var(--sc-text-muted); font-size:12px;">{{ h.fechaHora | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ h.tipoFenomeno }}</td>
+            <td style="color:var(--sc-text-muted);">{{ h.descripcion }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

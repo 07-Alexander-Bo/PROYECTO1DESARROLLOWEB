@@ -1,0 +1,44 @@
+<div class="sc-app" style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;">
+  <div class="sc-card" style="width:380px;">
+    <div class="sc-display" style="font-weight:600; font-size:17px; margin-bottom:4px;">Crear cuenta</div>
+    <div style="font-size:11.5px; color:var(--sc-text-muted); margin-bottom:20px;">Comunidad Los Encinos</div>
+
+    @if (exito()) {
+      <div style="background:rgba(76,175,109,0.14); border:1px solid rgba(76,175,109,0.35); color:var(--sc-verde); border-radius:8px; padding:12px; font-size:13px;">
+        Usuario creado correctamente. Redirigiendo al login...
+      </div>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="enviar()">
+        <label class="sc-label">Nombre completo</label>
+        <input class="sc-input" formControlName="nombreCompleto" style="margin-bottom:14px;" />
+
+        <label class="sc-label">Correo</label>
+        <input class="sc-input" type="email" formControlName="correo" style="margin-bottom:14px;" />
+
+        <label class="sc-label">Contrasena</label>
+        <input class="sc-input" type="password" formControlName="password" style="margin-bottom:14px;" />
+
+        <label class="sc-label">Rol</label>
+        <select class="sc-select" formControlName="rol" style="margin-bottom:18px;">
+          @for (r of roles; track r) {
+            <option [value]="r">{{ r }}</option>
+          }
+        </select>
+
+        @if (error()) {
+          <div style="background:rgba(216,72,63,0.14); border:1px solid rgba(216,72,63,0.35); color:var(--sc-rojo); border-radius:8px; padding:9px 11px; font-size:12.5px; margin-bottom:14px;">
+            {{ error() }}
+          </div>
+        }
+
+        <button class="sc-btn sc-btn-primary" type="submit" [disabled]="cargando()" style="width:100%; justify-content:center; padding:11px 0;">
+          {{ cargando() ? 'Creando cuenta...' : 'Registrarme' }}
+        </button>
+      </form>
+
+      <div style="text-align:center; margin-top:16px; font-size:12px; color:var(--sc-text-muted);">
+        Ya tienes cuenta? <a routerLink="/login" style="color:var(--sc-accent);">Inicia sesion</a>
+      </div>
+    }
+  </div>
+</div>

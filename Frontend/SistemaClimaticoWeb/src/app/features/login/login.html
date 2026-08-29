@@ -1,0 +1,35 @@
+<div class="sc-app" style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;">
+  <div class="sc-card" style="width:360px;">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:22px;">
+      <div style="width:38px; height:38px; border-radius:10px; background:var(--sc-accent-deep); display:flex; align-items:center; justify-content:center;">
+        <span class="sc-display" style="color:var(--sc-accent); font-weight:700;">V</span>
+      </div>
+      <div>
+        <div class="sc-display" style="font-weight:600; font-size:17px;">Vigia</div>
+        <div style="font-size:11px; color:var(--sc-text-muted);">Sistema de alerta temprana</div>
+      </div>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="enviar()">
+      <label class="sc-label">Correo</label>
+      <input class="sc-input" type="email" formControlName="correo" placeholder="admin@sistemaclimatico.com" style="margin-bottom:14px;" />
+
+      <label class="sc-label">Contrasena</label>
+      <input class="sc-input" type="password" formControlName="password" placeholder="********" style="margin-bottom:18px;" />
+
+      @if (error()) {
+        <div style="background:rgba(216,72,63,0.14); border:1px solid rgba(216,72,63,0.35); color:var(--sc-rojo); border-radius:8px; padding:9px 11px; font-size:12.5px; margin-bottom:14px;">
+          {{ error() }}
+        </div>
+      }
+
+      <button class="sc-btn sc-btn-primary" type="submit" [disabled]="cargando()" style="width:100%; justify-content:center; padding:11px 0;">
+        {{ cargando() ? 'Ingresando...' : 'Iniciar sesion' }}
+      </button>
+    </form>
+
+    <div style="text-align:center; margin-top:16px; font-size:12px; color:var(--sc-text-muted);">
+      No tienes cuenta? <a routerLink="/registro" style="color:var(--sc-accent);">Registrate</a>
+    </div>
+  </div>
+</div>

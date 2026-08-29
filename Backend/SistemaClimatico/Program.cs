@@ -16,6 +16,17 @@ builder.Services.AddDbContext<SistemaClimaticoContext>(options =>
 // Controllers (Sensores, Alertas, Historial, Auth, etc.)
 builder.Services.AddControllers();
 
+// CORS para permitir conexiones desde Angular
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AngularDev", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 // OpenAPI
 builder.Services.AddOpenApi();
 
@@ -58,13 +69,16 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// El orden importa: primero autenticación, luego autorización
+// CORS: permitir peticiones desde Angular
+app.UseCors("AngularDev");
+
+// Autenticación y autorización
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// Prueba de conexión con la base de datos (la dejamos, no estorba)
+// Prueba de conexión con la base de datos
 app.MapGet("/db-test", async (SistemaClimaticoContext db) =>
 {
     var cantidadSensores = await db.Sensores.CountAsync();

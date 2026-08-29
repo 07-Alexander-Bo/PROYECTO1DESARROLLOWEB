@@ -1,0 +1,68 @@
+/* Estilos del Sistema de Monitoreo Climatico.
+   Agregalo con: @import './styles-clima.css'; al inicio de tu styles.css existente. */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --sc-bg: #0E211C;
+  --sc-panel: #16302A;
+  --sc-panel-soft: #1B372F;
+  --sc-border: #28483D;
+  --sc-text: #F1EEE2;
+  --sc-text-muted: #8FA69D;
+  --sc-text-faint: #587065;
+  --sc-accent: #E8A33D;
+  --sc-accent-deep: #3A2A12;
+  --sc-verde: #4CAF6D;
+  --sc-amarillo: #E8C547;
+  --sc-naranja: #E8823D;
+  --sc-rojo: #D8483F;
+}
+
+.sc-app { font-family: 'Inter', sans-serif; background: var(--sc-bg); color: var(--sc-text); min-height: 100vh; }
+.sc-mono { font-family: 'IBM Plex Mono', monospace; }
+.sc-display { font-family: 'Space Grotesk', sans-serif; }
+
+.sc-card { background: var(--sc-panel); border: 1px solid var(--sc-border); border-radius: 12px; padding: 16px; }
+.sc-input {
+  width: 100%; background: var(--sc-bg); border: 1px solid var(--sc-border); border-radius: 8px;
+  padding: 9px 11px; color: var(--sc-text); font-size: 13px; outline: none; box-sizing: border-box;
+}
+.sc-input:focus { border-color: var(--sc-accent); }
+.sc-select { width: 100%; background: var(--sc-bg); border: 1px solid var(--sc-border); border-radius: 8px; padding: 9px 11px; color: var(--sc-text); font-size: 13px; }
+.sc-label { font-size: 11.5px; color: var(--sc-text-muted); display: block; margin-bottom: 5px; }
+
+.sc-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px;
+  border: 1px solid var(--sc-border); background: transparent; color: var(--sc-text-muted);
+  font-size: 12.5px; cursor: pointer;
+}
+.sc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sc-btn-primary { border: none; background: var(--sc-accent); color: #241705; font-weight: 600; }
+
+.sc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.sc-table th { text-align: left; padding: 12px 16px; color: var(--sc-text-muted); font-weight: 500; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--sc-border); }
+.sc-table td { padding: 12px 16px; border-bottom: 1px solid var(--sc-border); }
+
+.sc-pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 11px; font-size: 11.5px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 0.4px; }
+.sc-pill-dot { width: 6px; height: 6px; border-radius: 999px; }
+.sc-pill-Verde { background: rgba(76,175,109,0.14); color: var(--sc-verde); border: 1px solid rgba(76,175,109,0.35); }
+.sc-pill-Verde .sc-pill-dot { background: var(--sc-verde); }
+.sc-pill-Amarillo { background: rgba(232,197,71,0.14); color: var(--sc-amarillo); border: 1px solid rgba(232,197,71,0.35); }
+.sc-pill-Amarillo .sc-pill-dot { background: var(--sc-amarillo); }
+.sc-pill-Naranja { background: rgba(232,130,61,0.14); color: var(--sc-naranja); border: 1px solid rgba(232,130,61,0.35); }
+.sc-pill-Naranja .sc-pill-dot { background: var(--sc-naranja); }
+.sc-pill-Rojo { background: rgba(216,72,63,0.14); color: var(--sc-rojo); border: 1px solid rgba(216,72,63,0.35); }
+.sc-pill-Rojo .sc-pill-dot { background: var(--sc-rojo); }
+
+.sc-shell { display: flex; min-height: 100vh; }
+.sc-sidebar { width: 208px; flex-shrink: 0; background: var(--sc-panel); border-right: 1px solid var(--sc-border); display: flex; flex-direction: column; padding: 20px 14px; }
+.sc-sidebar-link { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; border: none; cursor: pointer; text-align: left; background: transparent; color: var(--sc-text-muted); font-size: 13.5px; text-decoration: none; width: 100%; box-sizing: border-box; }
+.sc-sidebar-link.active { background: var(--sc-accent-deep); color: var(--sc-accent); }
+.sc-topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-bottom: 1px solid var(--sc-border); background: var(--sc-panel); flex-wrap: wrap; gap: 12px; }
+.sc-content { flex: 1; padding: 24px; overflow: auto; }
+
+.sc-grid-sensores { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+
+@keyframes sc-pulse { 0% { box-shadow: 0 0 0 0 rgba(76,175,109,0.5); } 70% { box-shadow: 0 0 0 6px rgba(76,175,109,0); } 100% { box-shadow: 0 0 0 0 rgba(76,175,109,0); } }
+.sc-live-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--sc-verde); animation: sc-pulse 1.8s infinite; }
