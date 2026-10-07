@@ -4,3 +4,5 @@ obj/
 .angular/
 *.user
 Database/Data/
+.env
+Docker/.env
