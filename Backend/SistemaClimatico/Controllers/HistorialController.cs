@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SistemaClimatico.Dtos;
 
 namespace SistemaClimatico.Controllers;
 
+// Solo lectura: cualquier usuario autenticado.
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class HistorialController : ControllerBase
 {
     private readonly Models.SistemaClimaticoContext _db;

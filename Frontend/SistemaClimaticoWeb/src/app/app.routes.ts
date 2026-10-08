@@ -4,7 +4,6 @@ import { Shell } from './features/shell/shell';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./features/login/login').then((m) => m.Login) },
-  { path: 'registro', loadComponent: () => import('./features/registro/registro').then((m) => m.Registro) },
   {
     path: '',
     component: Shell,
@@ -19,6 +18,12 @@ export const routes: Routes = [
         path: 'admin',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/admin/admin').then((m) => m.Admin),
+      },
+      {
+        // Crear usuarios: solo Administrador (la API tambien lo exige).
+        path: 'registro',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/registro/registro').then((m) => m.Registro),
       },
     ],
   },

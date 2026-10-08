@@ -16,6 +16,7 @@
     <a class="sc-sidebar-link" routerLink="/historial" routerLinkActive="active">Historial</a>
     @if (auth.currentUser()?.rol === 'Administrador') {
       <a class="sc-sidebar-link" routerLink="/admin" routerLinkActive="active">Administracion</a>
+      <a class="sc-sidebar-link" routerLink="/registro" routerLinkActive="active">Nuevo usuario</a>
     }
 
     <div style="margin-top:auto; padding:12px 8px; font-size:10.5px; color:var(--sc-text-faint); line-height:1.5;">

@@ -16,12 +16,14 @@ public class AuthController : ControllerBase
 {
     private readonly SistemaClimaticoContext _db;
     private readonly TokenService _tokenService;
+    private readonly BitacoraService _bitacora;
     private readonly PasswordHasher<Usuario> _hasher = new();
 
-    public AuthController(SistemaClimaticoContext db, TokenService tokenService)
+    public AuthController(SistemaClimaticoContext db, TokenService tokenService, BitacoraService bitacora)
     {
         _db = db;
         _tokenService = tokenService;
+        _bitacora = bitacora;
     }
 
     // Roles permitidos por el CHECK constraint CK_Usuarios_Rol de la base de datos.
@@ -29,10 +31,9 @@ public class AuthController : ControllerBase
     private static readonly string[] RolesValidos = { "Administrador", "Operador", "Usuario" };
 
     // POST /api/auth/registro
-    // Nota: por ahora este endpoint es público para poder crear el primer usuario.
-    // Cuando ya tengas al menos un Administrador, considera protegerlo con
-    // [Authorize(Roles = "Administrador")] para que solo un Administrador pueda
-    // crear otros usuarios (esto lo dejamos como siguiente paso).
+    // Solo un Administrador puede crear usuarios. El primer Administrador se crea
+    // al arrancar la API (ver Services/AdminSeeder.cs).
+    [Authorize(Roles = "Administrador")]
     [HttpPost("registro")]
     public async Task<ActionResult<UsuarioDto>> Registro(RegistroRequest request)
     {
@@ -67,6 +68,9 @@ public class AuthController : ControllerBase
         _db.Usuarios.Add(usuario);
         await _db.SaveChangesAsync();
 
+        await _bitacora.RegistrarAsync("USUARIO_CREADO",
+            $"Se creó el usuario {usuario.Correo} con rol {usuario.Rol}.");
+
         return CreatedAtAction(nameof(Registro), new { id = usuario.IdUsuario }, MapearDto(usuario));
     }
 
@@ -77,21 +81,30 @@ public class AuthController : ControllerBase
         var usuario = await _db.Usuarios.FirstOrDefaultAsync(u => u.Correo == request.Correo);
         if (usuario is null)
         {
+            await _bitacora.RegistrarAsync("LOGIN_FALLIDO",
+                $"Intento de acceso con un correo no registrado: {request.Correo}.");
             return Unauthorized(new { mensaje = "Correo o contraseña incorrectos." });
         }
 
         if (!usuario.Activo)
         {
+            await _bitacora.RegistrarAsync("LOGIN_FALLIDO",
+                $"Intento de acceso de un usuario desactivado: {usuario.Correo}.", usuario.IdUsuario);
             return Unauthorized(new { mensaje = "El usuario está desactivado. Contacta al administrador." });
         }
 
         var resultado = _hasher.VerifyHashedPassword(usuario, usuario.PasswordHash, request.Password);
         if (resultado == PasswordVerificationResult.Failed)
         {
+            await _bitacora.RegistrarAsync("LOGIN_FALLIDO",
+                $"Contraseña incorrecta para {usuario.Correo}.", usuario.IdUsuario);
             return Unauthorized(new { mensaje = "Correo o contraseña incorrectos." });
         }
 
         var (token, expira) = _tokenService.GenerarToken(usuario);
+
+        await _bitacora.RegistrarAsync("LOGIN",
+            $"Inicio de sesión de {usuario.Correo}.", usuario.IdUsuario);
 
         return Ok(new LoginResponse
         {

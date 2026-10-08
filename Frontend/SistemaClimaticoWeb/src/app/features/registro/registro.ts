@@ -1,28 +1,28 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth';
 import { Rol } from '../../core/models';
 
+// Pantalla para que un Administrador cree usuarios nuevos.
+// Ya no es publica: vive dentro del shell y exige el adminGuard.
 @Component({
   selector: 'app-registro',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './registro.html',
   styleUrl: './registro.css',
 })
 export class Registro {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
-  private router = inject(Router);
 
   // Segun el CHECK constraint CK_Usuarios_Rol de tu base de datos.
   roles: Rol[] = ['Usuario', 'Operador', 'Administrador'];
 
   cargando = signal(false);
   error = signal<string | null>(null);
-  exito = signal(false);
+  exito = signal<string | null>(null);
 
   form = this.fb.nonNullable.group({
     nombreCompleto: ['', [Validators.required, Validators.maxLength(150)]],
@@ -38,16 +38,23 @@ export class Registro {
     }
     this.cargando.set(true);
     this.error.set(null);
+    this.exito.set(null);
 
-    this.auth.registro(this.form.getRawValue()).subscribe({
+    const datos = this.form.getRawValue();
+
+    this.auth.registro(datos).subscribe({
       next: () => {
         this.cargando.set(false);
-        this.exito.set(true);
-        setTimeout(() => this.router.navigate(['/login']), 1200);
+        this.exito.set(`Usuario ${datos.correo} creado correctamente.`);
+        this.form.reset({ nombreCompleto: '', correo: '', password: '', rol: 'Usuario' });
       },
       error: (err) => {
         this.cargando.set(false);
-        this.error.set(err?.error?.mensaje ?? 'No se pudo completar el registro.');
+        this.error.set(
+          err?.status === 403
+            ? 'No tienes permiso para crear usuarios.'
+            : (err?.error?.mensaje ?? 'No se pudo crear el usuario.'),
+        );
       },
     });
   }

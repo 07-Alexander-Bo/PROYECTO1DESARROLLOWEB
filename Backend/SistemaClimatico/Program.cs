@@ -7,21 +7,33 @@ using SistemaClimatico.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Conexión a SQL Server
-builder.Services.AddDbContext<SistemaClimaticoContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("SistemaClimatico")
-    ));
+// Los secretos (cadena de conexión, clave JWT, admin inicial) NO viven en el repositorio.
+// En desarrollo salen de 'dotnet user-secrets'; en Docker/producción, de variables de entorno.
 
-// Controllers (Sensores, Alertas, Historial, Auth, etc.)
+// Conexión a SQL Server
+var connectionString = builder.Configuration.GetConnectionString("SistemaClimatico");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Falta ConnectionStrings:SistemaClimatico. Configúrala con 'dotnet user-secrets set' " +
+        "o con la variable de entorno ConnectionStrings__SistemaClimatico.");
+}
+
+builder.Services.AddDbContext<SistemaClimaticoContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// Controllers (Sensores, Alertas, Historial, Auth, Bitácora)
 builder.Services.AddControllers();
 
-// CORS para permitir conexiones desde Angular
+// CORS: orígenes permitidos configurables (Cors:AllowedOrigins). Por defecto, Angular en local.
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? new[] { "http://localhost:4200" };
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AngularDev", policy =>
+    options.AddPolicy("Frontend", policy =>
     {
-        policy.WithOrigins("http://localhost:4200")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -33,10 +45,19 @@ builder.Services.AddOpenApi();
 // Servicio de tokens JWT
 builder.Services.AddScoped<TokenService>();
 
+// Bitácora de acciones de usuarios (necesita acceso al usuario de la petición actual)
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<BitacoraService>();
+
 // Autenticación con JWT
 var jwtSection = builder.Configuration.GetSection("Jwt");
-var jwtKey = jwtSection["Key"]
-    ?? throw new InvalidOperationException("Falta configurar Jwt:Key en appsettings.json");
+var jwtKey = jwtSection["Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
+{
+    throw new InvalidOperationException(
+        "Falta Jwt:Key o es demasiado corta (mínimo 32 caracteres). Configúrala con " +
+        "'dotnet user-secrets set \"Jwt:Key\" \"...\"' o con la variable de entorno Jwt__Key.");
+}
 
 builder.Services.AddAuthentication(options =>
 {
@@ -61,6 +82,12 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// Crea el primer Administrador si no existe ninguno (ver Services/AdminSeeder.cs)
+using (var scope = app.Services.CreateScope())
+{
+    await AdminSeeder.SembrarAsync(scope.ServiceProvider);
+}
+
 // OpenAPI
 if (app.Environment.IsDevelopment())
 {
@@ -70,7 +97,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // CORS: permitir peticiones desde Angular
-app.UseCors("AngularDev");
+app.UseCors("Frontend");
 
 // Autenticación y autorización
 app.UseAuthentication();
@@ -78,7 +105,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Prueba de conexión con la base de datos
+// Prueba de conexión con la base de datos (ahora requiere estar autenticado)
 app.MapGet("/db-test", async (SistemaClimaticoContext db) =>
 {
     var cantidadSensores = await db.Sensores.CountAsync();
@@ -88,6 +115,6 @@ app.MapGet("/db-test", async (SistemaClimaticoContext db) =>
         mensaje = "Conexión a SQL Server correcta",
         sensores = cantidadSensores
     });
-});
+}).RequireAuthorization();
 
 app.Run();

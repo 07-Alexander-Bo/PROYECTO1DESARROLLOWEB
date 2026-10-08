@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SistemaClimatico.Dtos;
@@ -6,15 +7,20 @@ using SistemaClimatico.Services;
 
 namespace SistemaClimatico.Controllers;
 
+// Consultar: cualquier usuario autenticado.
+// Marcar una alerta como atendida: Administrador u Operador.
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class AlertasController : ControllerBase
 {
     private readonly SistemaClimaticoContext _db;
+    private readonly BitacoraService _bitacora;
 
-    public AlertasController(SistemaClimaticoContext db)
+    public AlertasController(SistemaClimaticoContext db, BitacoraService bitacora)
     {
         _db = db;
+        _bitacora = bitacora;
     }
 
     // GET api/alertas?nivel=Rojo&tipoFenomeno=Inundacion&atendida=false
@@ -79,6 +85,7 @@ public class AlertasController : ControllerBase
     }
 
     // PATCH api/alertas/5/atender
+    [Authorize(Roles = "Administrador,Operador")]
     [HttpPatch("{id:long}/atender")]
     public async Task<IActionResult> AtenderAlerta(long id)
     {
@@ -88,6 +95,9 @@ public class AlertasController : ControllerBase
 
         alerta.Atendida = true;
         await _db.SaveChangesAsync();
+
+        await _bitacora.RegistrarAsync("ALERTA_ATENDIDA",
+            $"Se marcó como atendida la alerta {alerta.IdAlerta} ({alerta.TipoFenomeno}, nivel {alerta.Nivel}).");
 
         return Ok(new { mensaje = "Alerta marcada como atendida." });
     }

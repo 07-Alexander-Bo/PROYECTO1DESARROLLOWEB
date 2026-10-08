@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SistemaClimatico.Dtos;
@@ -6,15 +7,21 @@ using SistemaClimatico.Services;
 
 namespace SistemaClimatico.Controllers;
 
+// Consultar: cualquier usuario autenticado.
+// Crear/editar sensores: solo Administrador.
+// Activar/desactivar sensores y registrar lecturas: Administrador u Operador.
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class SensoresController : ControllerBase
 {
     private readonly SistemaClimaticoContext _db;
+    private readonly BitacoraService _bitacora;
 
-    public SensoresController(SistemaClimaticoContext db)
+    public SensoresController(SistemaClimaticoContext db, BitacoraService bitacora)
     {
         _db = db;
+        _bitacora = bitacora;
     }
 
     // GET api/sensores
@@ -66,6 +73,7 @@ public class SensoresController : ControllerBase
     }
 
     // POST api/sensores
+    [Authorize(Roles = "Administrador")]
     [HttpPost]
     public async Task<ActionResult<SensorDto>> CrearSensor([FromBody] CrearSensorDto dto)
     {
@@ -94,6 +102,9 @@ public class SensoresController : ControllerBase
         _db.Sensores.Add(sensor);
         await _db.SaveChangesAsync();
 
+        await _bitacora.RegistrarAsync("SENSOR_CREADO",
+            $"Se creó el sensor '{sensor.Nombre}' (id {sensor.IdSensor}, tipo {sensor.Tipo}).");
+
         var resultado = new SensorDto
         {
             IdSensor = sensor.IdSensor,
@@ -109,6 +120,7 @@ public class SensoresController : ControllerBase
     }
 
     // PUT api/sensores/5
+    [Authorize(Roles = "Administrador")]
     [HttpPut("{id:int}")]
     public async Task<IActionResult> ActualizarSensor(int id, [FromBody] ActualizarSensorDto dto)
     {
@@ -132,10 +144,14 @@ public class SensoresController : ControllerBase
 
         await _db.SaveChangesAsync();
 
+        await _bitacora.RegistrarAsync("SENSOR_ACTUALIZADO",
+            $"Se editó el sensor '{sensor.Nombre}' (id {sensor.IdSensor}).");
+
         return NoContent();
     }
 
     // PATCH api/sensores/5/activar
+    [Authorize(Roles = "Administrador,Operador")]
     [HttpPatch("{id:int}/activar")]
     public async Task<IActionResult> ActivarSensor(int id)
     {
@@ -146,10 +162,14 @@ public class SensoresController : ControllerBase
         sensor.Activo = true;
         await _db.SaveChangesAsync();
 
+        await _bitacora.RegistrarAsync("SENSOR_ACTIVADO",
+            $"Se activó el sensor '{sensor.Nombre}' (id {sensor.IdSensor}).");
+
         return Ok(new { mensaje = $"Sensor '{sensor.Nombre}' activado." });
     }
 
     // PATCH api/sensores/5/desactivar
+    [Authorize(Roles = "Administrador,Operador")]
     [HttpPatch("{id:int}/desactivar")]
     public async Task<IActionResult> DesactivarSensor(int id)
     {
@@ -159,6 +179,9 @@ public class SensoresController : ControllerBase
 
         sensor.Activo = false;
         await _db.SaveChangesAsync();
+
+        await _bitacora.RegistrarAsync("SENSOR_DESACTIVADO",
+            $"Se desactivó el sensor '{sensor.Nombre}' (id {sensor.IdSensor}).");
 
         return Ok(new { mensaje = $"Sensor '{sensor.Nombre}' desactivado." });
     }
@@ -189,6 +212,7 @@ public class SensoresController : ControllerBase
 
     // POST api/sensores/5/lecturas
     // Registra una lectura simulada para el sensor (base para la Fase 7: simulación de sensores)
+    [Authorize(Roles = "Administrador,Operador")]
     [HttpPost("{id:int}/lecturas")]
     public async Task<ActionResult<LecturaDto>> CrearLectura(int id, [FromBody] CrearLecturaDto dto)
     {
@@ -208,6 +232,9 @@ public class SensoresController : ControllerBase
 
         _db.LecturasSensores.Add(lectura);
         await _db.SaveChangesAsync();
+
+        await _bitacora.RegistrarAsync("LECTURA_MANUAL",
+            $"Lectura manual de {dto.Valor} {sensor.UnidadMedida} en el sensor '{sensor.Nombre}' (id {id}).");
 
         // Evaluar automáticamente el riesgo de esta lectura (Fase 8: sistema automático de alertas)
         var evaluacion = MotorAlertas.Evaluar(sensor.Tipo, dto.Valor);

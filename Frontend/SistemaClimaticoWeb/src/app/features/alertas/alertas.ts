@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AlertasService } from '../../core/alertas';
+import { AuthService } from '../../core/auth';
 import { AlertaDto, NivelAlerta } from '../../core/models';
 
 @Component({
@@ -12,6 +13,12 @@ import { AlertaDto, NivelAlerta } from '../../core/models';
 })
 export class Alertas implements OnInit {
   private srv = inject(AlertasService);
+  private auth = inject(AuthService);
+
+  // Marcar alertas como atendidas: solo Administrador u Operador (la API tambien lo exige).
+  get puedeAtender(): boolean {
+    return this.auth.currentUser()?.rol !== 'Usuario';
+  }
 
   alertas = signal<AlertaDto[]>([]);
   cargando = signal(true);

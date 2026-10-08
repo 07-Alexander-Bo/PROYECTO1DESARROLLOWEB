@@ -13,8 +13,8 @@
     <table class="sc-table">
       <thead>
         <tr>
-          <th>Sensor</th><th>Tipo</th><th>Ubicacion</th><th>Estado</th><th>Registrar lectura</th>
-          @if (puedeAdministrar) { <th>Accion</th> }
+          <th>Sensor</th><th>Tipo</th><th>Ubicacion</th><th>Estado</th>
+          @if (puedeAdministrar) { <th>Registrar lectura</th><th>Accion</th> }
         </tr>
       </thead>
       <tbody>
@@ -28,23 +28,23 @@
                 {{ s.activo ? 'Activo' : 'Inactivo' }}
               </span>
             </td>
-            <td>
-              @if (s.activo) {
-                <div style="display:flex; gap:6px; align-items:center;">
-                  <input class="sc-input" type="number" step="0.1" style="width:90px;"
-                    [(ngModel)]="valorLectura[s.idSensor]" [placeholder]="s.unidadMedida" />
-                  <button class="sc-btn" [disabled]="guardandoLectura() === s.idSensor" (click)="registrarLectura(s)">
-                    {{ guardandoLectura() === s.idSensor ? '...' : 'Guardar' }}
-                  </button>
-                  @if (mensajeLectura()?.id === s.idSensor) {
-                    <span style="font-size:11px; color:var(--sc-verde);">{{ mensajeLectura()?.texto }}</span>
-                  }
-                </div>
-              } @else {
-                <span style="color:var(--sc-text-faint); font-size:12px;">Sensor inactivo</span>
-              }
-            </td>
             @if (puedeAdministrar) {
+              <td>
+                @if (s.activo) {
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <input class="sc-input" type="number" step="0.1" style="width:90px;"
+                      [(ngModel)]="valorLectura[s.idSensor]" [placeholder]="s.unidadMedida" />
+                    <button class="sc-btn" [disabled]="guardandoLectura() === s.idSensor" (click)="registrarLectura(s)">
+                      {{ guardandoLectura() === s.idSensor ? '...' : 'Guardar' }}
+                    </button>
+                    @if (mensajeLectura()?.id === s.idSensor) {
+                      <span style="font-size:11px; color:var(--sc-verde);">{{ mensajeLectura()?.texto }}</span>
+                    }
+                  </div>
+                } @else {
+                  <span style="color:var(--sc-text-faint); font-size:12px;">Sensor inactivo</span>
+                }
+              </td>
               <td>
                 <button class="sc-btn" (click)="activarDesactivar(s)">
                   {{ s.activo ? 'Desactivar' : 'Activar' }}
