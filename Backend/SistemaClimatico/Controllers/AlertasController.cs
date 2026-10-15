@@ -16,11 +16,13 @@ public class AlertasController : ControllerBase
 {
     private readonly SistemaClimaticoContext _db;
     private readonly BitacoraService _bitacora;
+    private readonly NotificadorTiempoReal _notificador;
 
-    public AlertasController(SistemaClimaticoContext db, BitacoraService bitacora)
+    public AlertasController(SistemaClimaticoContext db, BitacoraService bitacora, NotificadorTiempoReal notificador)
     {
         _db = db;
         _bitacora = bitacora;
+        _notificador = notificador;
     }
 
     // GET api/alertas?nivel=Rojo&tipoFenomeno=Inundacion&atendida=false
@@ -98,6 +100,9 @@ public class AlertasController : ControllerBase
 
         await _bitacora.RegistrarAsync("ALERTA_ATENDIDA",
             $"Se marcó como atendida la alerta {alerta.IdAlerta} ({alerta.TipoFenomeno}, nivel {alerta.Nivel}).");
+
+        // Los demás navegadores abiertos quitan la alerta de su lista de pendientes.
+        await _notificador.AlertaAtendidaAsync(alerta.IdAlerta);
 
         return Ok(new { mensaje = "Alerta marcada como atendida." });
     }

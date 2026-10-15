@@ -9,21 +9,37 @@
 }
 
 @if (!cargando() && !error()) {
-  <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-    <span class="sc-pill" [class]="'sc-pill-' + nivelComunidad()">
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap;">
+    <span class="sc-pill" [class]="'sc-pill sc-pill-' + nivelComunidad()">
       <span class="sc-pill-dot"></span>
-      Estado general: {{ nivelComunidad() }}
+      Estado general: {{ etiquetaNivel(nivelComunidad()) }}
     </span>
     <span style="font-size:12.5px; color:var(--sc-text-muted);">{{ estados().length }} sensores activos</span>
+
+    <span style="flex:1;"></span>
+
+    @if (simuladorActivo() !== null) {
+      <span style="font-size:12px; color:var(--sc-text-muted);">
+        Simulador de sensores:
+        <strong [style.color]="simuladorActivo() ? 'var(--sc-verde)' : 'var(--sc-amarillo)'">
+          {{ simuladorActivo() ? 'activo' : 'en pausa' }}
+        </strong>
+      </span>
+      @if (esAdmin) {
+        <button class="sc-btn" type="button" [disabled]="cambiandoSimulador()" (click)="alternarSimulador()">
+          {{ simuladorActivo() ? 'Pausar' : 'Reanudar' }}
+        </button>
+      }
+    }
   </div>
 
   <div class="sc-grid-sensores" style="margin-bottom:24px;">
     @for (e of estados(); track e.idSensor) {
-      <div class="sc-card">
+      <div class="sc-card" [style.border-color]="e.nivel === 'Verde' ? '' : colorNivel(e.nivel)">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <span style="font-size:11.5px; color:var(--sc-text-muted);">{{ e.tipoSensor }}</span>
-          <span class="sc-pill" [class]="'sc-pill-' + e.nivel">
-            <span class="sc-pill-dot"></span>{{ e.nivel }}
+          <span class="sc-pill" [class]="'sc-pill sc-pill-' + e.nivel">
+            <span class="sc-pill-dot"></span>{{ etiquetaNivel(e.nivel) }}
           </span>
         </div>
         <div class="sc-mono" style="font-size:26px; font-weight:500;">
@@ -35,25 +51,46 @@
         </div>
         <div style="font-size:12px; color:var(--sc-text-muted); margin:4px 0 8px;">{{ e.nombreSensor }}</div>
         <div style="font-size:11.5px; color:var(--sc-text-faint);">{{ e.mensaje }}</div>
+        @if (e.fechaUltimaLectura) {
+          <div class="sc-mono" style="font-size:10.5px; color:var(--sc-text-faint); margin-top:8px;">
+            Actualizado {{ e.fechaUltimaLectura | date:'HH:mm:ss' }}
+          </div>
+        }
       </div>
     }
   </div>
 
   <div class="sc-card">
-    <div style="font-size:13px; margin-bottom:12px;">Alertas activas (sin atender)</div>
+    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
+      <span style="font-size:13px;">Alertas activas (sin atender)</span>
+      @if (alertasActivas().length > 0) {
+        <span class="sc-mono" style="font-size:11.5px; color:var(--sc-text-muted);">{{ alertasActivas().length }} pendientes</span>
+      }
+    </div>
     @if (alertasActivas().length === 0) {
       <div style="font-size:12.5px; color:var(--sc-text-muted);">Sin alertas pendientes por ahora.</div>
     }
     <div style="display:flex; flex-direction:column; gap:10px;">
-      @for (a of alertasActivas(); track a.idAlerta) {
-        <div style="display:flex; gap:10px; padding-left:10px; border-left:3px solid var(--sc-rojo);">
-          <div>
-            <div style="font-size:12.5px;">{{ a.nombreSensor }} - {{ a.tipoFenomeno }}</div>
+      @for (a of alertasActivas().slice(0, maxAlertasVisibles); track a.idAlerta) {
+        <div style="display:flex; gap:10px; padding-left:10px; border-left:3px solid;" [style.border-left-color]="colorNivel(a.nivel)">
+          <div style="flex:1;">
+            <div style="font-size:12.5px;">
+              {{ a.nombreSensor }} · {{ nombreFenomeno(a.tipoFenomeno) }}
+              <span style="color:var(--sc-text-faint); font-size:11px;">({{ etiquetaNivel(a.nivel) }})</span>
+            </div>
             <div style="font-size:11px; color:var(--sc-text-muted);">{{ a.mensaje }}</div>
           </div>
+          <span class="sc-mono" style="font-size:10.5px; color:var(--sc-text-faint); white-space:nowrap;">
+            {{ a.fechaHora | date:'HH:mm:ss' }}
+          </span>
         </div>
       }
     </div>
+    @if (alertasActivas().length > maxAlertasVisibles) {
+      <div style="margin-top:10px; font-size:11.5px; color:var(--sc-text-muted);">
+        y {{ alertasActivas().length - maxAlertasVisibles }} más…
+      </div>
+    }
     <div style="margin-top:14px;">
       <a routerLink="/alertas" style="color:var(--sc-accent); font-size:12px;">Ver todas las alertas &rarr;</a>
     </div>

@@ -17,11 +17,19 @@ public class SensoresController : ControllerBase
 {
     private readonly SistemaClimaticoContext _db;
     private readonly BitacoraService _bitacora;
+    private readonly ProcesadorLecturas _procesador;
+    private readonly NotificadorTiempoReal _notificador;
 
-    public SensoresController(SistemaClimaticoContext db, BitacoraService bitacora)
+    public SensoresController(
+        SistemaClimaticoContext db,
+        BitacoraService bitacora,
+        ProcesadorLecturas procesador,
+        NotificadorTiempoReal notificador)
     {
         _db = db;
         _bitacora = bitacora;
+        _procesador = procesador;
+        _notificador = notificador;
     }
 
     // GET api/sensores
@@ -104,6 +112,7 @@ public class SensoresController : ControllerBase
 
         await _bitacora.RegistrarAsync("SENSOR_CREADO",
             $"Se creó el sensor '{sensor.Nombre}' (id {sensor.IdSensor}, tipo {sensor.Tipo}).");
+        await _notificador.SensoresActualizadosAsync();
 
         var resultado = new SensorDto
         {
@@ -146,6 +155,7 @@ public class SensoresController : ControllerBase
 
         await _bitacora.RegistrarAsync("SENSOR_ACTUALIZADO",
             $"Se editó el sensor '{sensor.Nombre}' (id {sensor.IdSensor}).");
+        await _notificador.SensoresActualizadosAsync();
 
         return NoContent();
     }
@@ -164,6 +174,7 @@ public class SensoresController : ControllerBase
 
         await _bitacora.RegistrarAsync("SENSOR_ACTIVADO",
             $"Se activó el sensor '{sensor.Nombre}' (id {sensor.IdSensor}).");
+        await _notificador.SensoresActualizadosAsync();
 
         return Ok(new { mensaje = $"Sensor '{sensor.Nombre}' activado." });
     }
@@ -182,6 +193,7 @@ public class SensoresController : ControllerBase
 
         await _bitacora.RegistrarAsync("SENSOR_DESACTIVADO",
             $"Se desactivó el sensor '{sensor.Nombre}' (id {sensor.IdSensor}).");
+        await _notificador.SensoresActualizadosAsync();
 
         return Ok(new { mensaje = $"Sensor '{sensor.Nombre}' desactivado." });
     }
@@ -223,47 +235,13 @@ public class SensoresController : ControllerBase
         if (!sensor.Activo)
             return BadRequest(new { mensaje = "No se pueden registrar lecturas para un sensor inactivo." });
 
-        var lectura = new LecturasSensore
-        {
-            IdSensor = id,
-            Valor = dto.Valor,
-            FechaHora = DateTime.Now
-        };
-
-        _db.LecturasSensores.Add(lectura);
-        await _db.SaveChangesAsync();
+        // Guardar, evaluar, generar alerta (sin duplicados) y avisar en tiempo real:
+        // es el mismo camino que usa el simulador (Services/ProcesadorLecturas.cs).
+        var resultado = await _procesador.RegistrarLecturaAsync(sensor, dto.Valor);
+        var lectura = resultado.Lectura;
 
         await _bitacora.RegistrarAsync("LECTURA_MANUAL",
-            $"Lectura manual de {dto.Valor} {sensor.UnidadMedida} en el sensor '{sensor.Nombre}' (id {id}).");
-
-        // Evaluar automáticamente el riesgo de esta lectura (Fase 8: sistema automático de alertas)
-        var evaluacion = MotorAlertas.Evaluar(sensor.Tipo, dto.Valor);
-
-        if (evaluacion.Nivel != "Verde" && evaluacion.TipoFenomeno is not null)
-        {
-            var alerta = new Alerta
-            {
-                IdSensor = id,
-                Nivel = evaluacion.Nivel,
-                TipoFenomeno = evaluacion.TipoFenomeno,
-                Mensaje = evaluacion.Mensaje,
-                ValorDetectado = dto.Valor,
-                FechaHora = DateTime.Now,
-                Atendida = false
-            };
-
-            _db.Alertas.Add(alerta);
-            await _db.SaveChangesAsync();
-
-            _db.HistorialEventos.Add(new HistorialEvento
-            {
-                IdAlerta = alerta.IdAlerta,
-                TipoFenomeno = evaluacion.TipoFenomeno,
-                Descripcion = evaluacion.Mensaje,
-                FechaHora = DateTime.Now
-            });
-            await _db.SaveChangesAsync();
-        }
+            $"Lectura manual de {lectura.Valor} {sensor.UnidadMedida} en el sensor '{sensor.Nombre}' (id {id}).");
 
         return CreatedAtAction(nameof(GetLecturas), new { id }, new LecturaDto
         {

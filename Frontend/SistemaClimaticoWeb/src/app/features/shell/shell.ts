@@ -2,6 +2,8 @@ import { Component, inject, signal, OnDestroy, PLATFORM_ID } from '@angular/core
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../core/auth';
+import { NotificacionesService } from '../../core/notificaciones';
+import { TiempoRealService } from '../../core/tiempo-real';
 
 @Component({
   selector: 'app-shell',
@@ -12,6 +14,8 @@ import { AuthService } from '../../core/auth';
 })
 export class Shell implements OnDestroy {
   auth = inject(AuthService);
+  tiempoReal = inject(TiempoRealService);
+  notif = inject(NotificacionesService);
   private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
 
@@ -22,6 +26,14 @@ export class Shell implements OnDestroy {
     ? setInterval(() => this.now.set(new Date()), 1000)
     : undefined;
 
+  constructor() {
+    // Mientras el usuario esta dentro de la aplicacion: conexion en tiempo real
+    // con la API y avisos (visual + sonoro) de alertas nuevas. Ambos servicios
+    // ignoran la llamada en el servidor (SSR).
+    this.notif.iniciar();
+    this.tiempoReal.iniciar();
+  }
+
   salir() {
     this.auth.logout();
     this.router.navigate(['/login']);
@@ -29,5 +41,6 @@ export class Shell implements OnDestroy {
 
   ngOnDestroy() {
     if (this.timer) clearInterval(this.timer);
+    this.tiempoReal.detener();
   }
 }

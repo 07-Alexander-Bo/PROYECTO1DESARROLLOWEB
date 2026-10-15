@@ -18,7 +18,7 @@
       <div class="sc-card" style="display:flex; align-items:center; gap:14px;">
         <div style="flex:1;">
           <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:13px;">{{ a.tipoFenomeno }}</span>
+            <span style="font-size:13px;">{{ nombreFenomeno(a.tipoFenomeno) }}</span>
             <span class="sc-pill" [class]="'sc-pill-' + a.nivel"><span class="sc-pill-dot"></span>{{ a.nivel }}</span>
           </div>
           <div style="font-size:12px; color:var(--sc-text-muted); margin-top:2px;">{{ a.mensaje }}</div>

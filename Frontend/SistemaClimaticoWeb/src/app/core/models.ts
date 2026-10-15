@@ -96,3 +96,35 @@ export interface HistorialEventoDto {
   descripcion: string;
   fechaHora: string;
 }
+
+// ---------- Presentacion de niveles y fenomenos ----------
+// Nombres que pide el enunciado: Verde (Normal), Amarillo (Precaución),
+// Naranja (Alerta), Rojo (Emergencia).
+export const ETIQUETA_NIVEL: Record<NivelAlerta, string> = {
+  Verde: 'Normal',
+  Amarillo: 'Precaución',
+  Naranja: 'Alerta',
+  Rojo: 'Emergencia',
+};
+
+export const COLOR_NIVEL: Record<NivelAlerta, string> = {
+  Verde: 'var(--sc-verde)',
+  Amarillo: 'var(--sc-amarillo)',
+  Naranja: 'var(--sc-naranja)',
+  Rojo: 'var(--sc-rojo)',
+};
+
+const NOMBRE_FENOMENO: Record<string, string> = {
+  Inundacion: 'Inundación',
+  Sequia: 'Sequía',
+  Tormenta: 'Tormenta',
+  Helada: 'Helada',
+  IncendioForestal: 'Incendio forestal',
+  Otro: 'Otro',
+};
+
+// 'IncendioForestal' -> 'Incendio forestal', 'Inundacion' -> 'Inundación', etc.
+export function nombreFenomeno(tipo?: string | null): string {
+  if (!tipo) return '';
+  return NOMBRE_FENOMENO[tipo] ?? tipo;
+}

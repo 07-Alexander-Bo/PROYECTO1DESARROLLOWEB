@@ -14,8 +14,8 @@
         }
         @for (h of eventos(); track h.idEvento) {
           <tr>
-            <td class="sc-mono" style="color:var(--sc-text-muted); font-size:12px;">{{ h.fechaHora | date:'dd/MM/yyyy HH:mm' }}</td>
-            <td>{{ h.tipoFenomeno }}</td>
+            <td class="sc-mono" style="color:var(--sc-text-muted); font-size:12px;">{{ h.fechaHora | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+            <td>{{ nombreFenomeno(h.tipoFenomeno) }}</td>
             <td style="color:var(--sc-text-muted);">{{ h.descripcion }}</td>
           </tr>
         }

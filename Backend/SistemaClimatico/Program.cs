@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using SistemaClimatico.Hubs;
 using SistemaClimatico.Models;
 using SistemaClimatico.Services;
 
@@ -35,9 +36,19 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials(); // necesario para SignalR (negociación de la conexión)
     });
 });
+
+// SignalR: canal de tiempo real hacia el navegador (/hubs/monitoreo)
+builder.Services.AddSignalR();
+
+// Tiempo real y simulación de sensores
+builder.Services.AddSingleton<SimuladorControl>();
+builder.Services.AddSingleton<NotificadorTiempoReal>();
+builder.Services.AddScoped<ProcesadorLecturas>();
+builder.Services.AddHostedService<SimuladorLecturasService>();
 
 // OpenAPI
 builder.Services.AddOpenApi();
@@ -76,6 +87,24 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSection["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
+
+    // SignalR con WebSockets no puede enviar el encabezado Authorization,
+    // así que el navegador manda el token como ?access_token=... en la URL del hub.
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var token = context.Request.Query["access_token"];
+
+            if (!string.IsNullOrEmpty(token) &&
+                context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+            {
+                context.Token = token;
+            }
+
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddAuthorization();
@@ -86,6 +115,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     await AdminSeeder.SembrarAsync(scope.ServiceProvider);
+    await SensoresDemoSeeder.SembrarAsync(scope.ServiceProvider);
 }
 
 // OpenAPI
@@ -104,6 +134,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Canal de tiempo real (solo usuarios autenticados, ver MonitoreoHub)
+app.MapHub<MonitoreoHub>("/hubs/monitoreo");
 
 // Prueba de conexión con la base de datos (ahora requiere estar autenticado)
 app.MapGet("/db-test", async (SistemaClimaticoContext db) =>

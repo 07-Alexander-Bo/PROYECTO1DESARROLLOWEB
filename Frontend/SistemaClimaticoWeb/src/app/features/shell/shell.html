@@ -26,13 +26,28 @@
 
   <div style="flex:1; display:flex; flex-direction:column;">
     <div class="sc-topbar">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span class="sc-live-dot"></span>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div class="conexion" [title]="'Conexión en tiempo real: ' + tiempoReal.estado()">
+          @if (tiempoReal.estado() === 'conectado') {
+            <span class="sc-live-dot"></span>
+            <span class="conexion-texto">En vivo</span>
+          } @else {
+            <span class="conexion-punto" [class]="'conexion-punto ' + tiempoReal.estado()"></span>
+            <span class="conexion-texto">
+              {{ tiempoReal.estado() === 'desconectado' ? 'Sin conexión' : 'Conectando…' }}
+            </span>
+          }
+        </div>
         <span class="sc-mono" style="font-size:12.5px; color:var(--sc-text-muted);">
           {{ now() | date:'dd/MM HH:mm:ss' }}
         </span>
       </div>
       <div style="display:flex; align-items:center; gap:14px;">
+        <button class="sc-btn" type="button" (click)="notif.alternarSilencio()"
+                [attr.aria-pressed]="!notif.silenciado()"
+                title="Sonido de las alertas">
+          Sonido: {{ notif.silenciado() ? 'apagado' : 'activo' }}
+        </button>
         <div style="text-align:right; line-height:1.2;">
           <div style="font-size:12.5px;">{{ auth.currentUser()?.nombreCompleto }}</div>
           <div class="sc-mono" style="font-size:10.5px; color:var(--sc-text-muted);">{{ auth.currentUser()?.rol }}</div>
@@ -43,5 +58,20 @@
     <div class="sc-content">
       <router-outlet></router-outlet>
     </div>
+  </div>
+
+  <!-- Avisos de alertas nuevas (visuales; el sonido lo maneja NotificacionesService) -->
+  <div class="toasts" role="region" aria-label="Avisos de alertas" aria-live="polite">
+    @for (t of notif.toasts(); track t.id) {
+      <div class="toast" [class]="'toast ' + t.nivel" role="alert" (click)="notif.cerrar(t.id)">
+        <div class="toast-cuerpo">
+          <div class="toast-titulo">{{ t.titulo }}</div>
+          <div class="toast-detalle">{{ t.detalle }}</div>
+          <div class="toast-meta">{{ t.sensor }} · {{ t.hora | date:'HH:mm:ss' }}</div>
+        </div>
+        <button class="toast-cerrar" type="button" aria-label="Cerrar aviso"
+                (click)="$event.stopPropagation(); notif.cerrar(t.id)">×</button>
+      </div>
+    }
   </div>
 </div>
