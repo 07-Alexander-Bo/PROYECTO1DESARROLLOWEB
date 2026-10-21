@@ -7,6 +7,12 @@
     <UserSecretsId>7c1f0f6e-4b1d-4a53-9a43-2f0e5b6d8a11</UserSecretsId>
   </PropertyGroup>
 
+  <!-- El script de tablas viaja dentro de la API: asi puede crear la base de datos
+       en el primer arranque (Docker / VPS) sin pasos manuales. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\Database\Scripts\01_create_tables.sql" LogicalName="01_create_tables.sql" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11" />

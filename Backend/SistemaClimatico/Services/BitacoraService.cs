@@ -26,7 +26,7 @@ public class BitacoraService
             IdUsuario = idUsuario ?? ObtenerIdUsuarioActual(),
             Accion = Truncar(accion, 100)!,
             Descripcion = Truncar(descripcion, 500),
-            FechaHora = DateTime.Now
+            FechaHora = DateTime.UtcNow
         });
 
         await _db.SaveChangesAsync();

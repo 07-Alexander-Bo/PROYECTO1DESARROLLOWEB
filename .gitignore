@@ -7,3 +7,7 @@ Database/Data/
 .env
 Docker/.env
 **/.env
+dist/
+.vs/
+*.log
+Thumbs.db

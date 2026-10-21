@@ -22,7 +22,7 @@ public static class EsquemaBaseDatos
               Latitud DECIMAL(9,6) NOT NULL,
               Longitud DECIMAL(9,6) NOT NULL,
               Activa BIT NOT NULL DEFAULT 1,
-              FechaCreacion DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+              FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
           );",
 
         // 2. Columnas nuevas en Sensores

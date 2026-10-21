@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SistemaClimatico.Dtos;
+using SistemaClimatico.Utilidades;
 using SistemaClimatico.Models;
 
 namespace SistemaClimatico.Controllers;
@@ -36,11 +37,15 @@ public class BitacoraController : ControllerBase
         if (!string.IsNullOrWhiteSpace(accion))
             query = query.Where(b => b.Accion == accion);
 
+        // Las fechas se guardan en UTC: los filtros se convierten antes de consultar.
+        var desdeUtc = desde.HasValue ? FechaUtil.AUtc(desde.Value) : default;
+        var hastaUtc = hasta.HasValue ? FechaUtil.HastaInclusivo(hasta.Value) : default;
+
         if (desde.HasValue)
-            query = query.Where(b => b.FechaHora >= desde.Value);
+            query = query.Where(b => b.FechaHora >= desdeUtc);
 
         if (hasta.HasValue)
-            query = query.Where(b => b.FechaHora <= hasta.Value);
+            query = query.Where(b => b.FechaHora <= hastaUtc);
 
         var registros = await query
             .OrderByDescending(b => b.FechaHora)

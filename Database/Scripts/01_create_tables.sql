@@ -19,7 +19,7 @@ CREATE TABLE Usuarios (
     PasswordHash NVARCHAR(255) NOT NULL,
     Rol NVARCHAR(50) NOT NULL DEFAULT 'Usuario',
     Activo BIT NOT NULL DEFAULT 1,
-    FechaCreacion DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
 
     CONSTRAINT CK_Usuarios_Rol
         CHECK (Rol IN ('Administrador', 'Operador', 'Usuario'))
@@ -38,7 +38,7 @@ CREATE TABLE Sensores (
     UnidadMedida NVARCHAR(30) NOT NULL,
     Ubicacion NVARCHAR(200) NULL,
     Activo BIT NOT NULL DEFAULT 1,
-    FechaCreacion DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
 
     CONSTRAINT CK_Sensores_Tipo
         CHECK (
@@ -63,7 +63,7 @@ CREATE TABLE LecturasSensores (
     IdLectura BIGINT IDENTITY(1,1) PRIMARY KEY,
     IdSensor INT NOT NULL,
     Valor DECIMAL(10,2) NOT NULL,
-    FechaHora DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    FechaHora DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
 
     CONSTRAINT FK_LecturasSensores_Sensores
         FOREIGN KEY (IdSensor)
@@ -83,7 +83,7 @@ CREATE TABLE Alertas (
     TipoFenomeno NVARCHAR(50) NOT NULL,
     Mensaje NVARCHAR(500) NOT NULL,
     ValorDetectado DECIMAL(10,2) NULL,
-    FechaHora DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    FechaHora DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     Atendida BIT NOT NULL DEFAULT 0,
 
     CONSTRAINT FK_Alertas_Sensores
@@ -124,7 +124,7 @@ CREATE TABLE HistorialEventos (
     IdAlerta BIGINT NULL,
     TipoFenomeno NVARCHAR(50) NOT NULL,
     Descripcion NVARCHAR(500) NOT NULL,
-    FechaHora DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    FechaHora DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
 
     CONSTRAINT FK_HistorialEventos_Alertas
         FOREIGN KEY (IdAlerta)
@@ -154,7 +154,7 @@ CREATE TABLE BitacoraAcciones (
     IdUsuario INT NULL,
     Accion NVARCHAR(100) NOT NULL,
     Descripcion NVARCHAR(500) NULL,
-    FechaHora DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    FechaHora DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
 
     CONSTRAINT FK_BitacoraAcciones_Usuarios
         FOREIGN KEY (IdUsuario)

@@ -57,7 +57,7 @@ public class ComunidadesController : ControllerBase
             Latitud = dto.Latitud,
             Longitud = dto.Longitud,
             Activa = true,
-            FechaCreacion = DateTime.Now
+            FechaCreacion = DateTime.UtcNow
         };
 
         _db.Comunidades.Add(comunidad);

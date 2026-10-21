@@ -62,8 +62,10 @@ export class Bitacora implements OnInit {
     this.srv.listar({
       idUsuario: this.idUsuario ? Number(this.idUsuario) : null,
       accion: this.accion || null,
-      desde: this.desde ? `${this.desde}T00:00:00` : null,
-      hasta: this.hasta ? `${this.hasta}T23:59:59` : null,
+      // El dia elegido es el de TU zona horaria; la API guarda todo en UTC, asi que se
+      // manda el instante exacto (con "Z").
+      desde: this.desde ? new Date(`${this.desde}T00:00:00`).toISOString() : null,
+      hasta: this.hasta ? new Date(`${this.hasta}T23:59:59.999`).toISOString() : null,
       limite: Number(this.limite),
     }).subscribe({
       next: (data) => { this.registros.set(data); this.cargando.set(false); },

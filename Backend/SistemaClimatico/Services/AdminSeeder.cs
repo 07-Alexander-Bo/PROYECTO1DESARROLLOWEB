@@ -48,7 +48,7 @@ public static class AdminSeeder
                 Correo = correo,
                 Rol = "Administrador",
                 Activo = true,
-                FechaCreacion = DateTime.Now
+                FechaCreacion = DateTime.UtcNow
             };
             admin.PasswordHash = new PasswordHasher<Usuario>().HashPassword(admin, password);
 
@@ -60,7 +60,7 @@ public static class AdminSeeder
                 IdUsuario = admin.IdUsuario,
                 Accion = "ADMIN_INICIAL_CREADO",
                 Descripcion = $"Se creó el administrador inicial {correo}.",
-                FechaHora = DateTime.Now
+                FechaHora = DateTime.UtcNow
             });
             await db.SaveChangesAsync();
 

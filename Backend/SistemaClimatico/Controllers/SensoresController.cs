@@ -109,7 +109,7 @@ public class SensoresController : ControllerBase
             UnidadMedida = dto.UnidadMedida.Trim(),
             Ubicacion = dto.Ubicacion?.Trim(),
             Activo = true,
-            FechaCreacion = DateTime.Now
+            FechaCreacion = DateTime.UtcNow
         };
 
         _db.Sensores.Add(sensor);

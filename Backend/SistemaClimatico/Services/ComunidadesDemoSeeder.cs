@@ -32,7 +32,7 @@ public static class ComunidadesDemoSeeder
                 Latitud = 14.9400m,
                 Longitud = -91.1100m,
                 Activa = true,
-                FechaCreacion = DateTime.Now
+                FechaCreacion = DateTime.UtcNow
             };
             var secundaria = new Comunidad
             {
@@ -41,7 +41,7 @@ public static class ComunidadesDemoSeeder
                 Latitud = 14.9050m,
                 Longitud = -91.0550m,
                 Activa = true,
-                FechaCreacion = DateTime.Now
+                FechaCreacion = DateTime.UtcNow
             };
 
             db.Comunidades.Add(principal);

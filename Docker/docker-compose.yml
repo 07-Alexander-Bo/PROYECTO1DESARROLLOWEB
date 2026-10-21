@@ -1,20 +1,73 @@
+# Sistema completo: base de datos + API + sitio web.
+#
+#   Todo el sistema (VPS o prueba local):   docker compose up -d --build
+#   Solo la base de datos (desarrollo):     docker compose up -d sqlserver
+#
+# Antes de levantarlo copia ".env.example" como ".env" y cambia los valores.
+
 services:
+
+  # ---------------- Base de datos ----------------
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sistema-climatico-sql
-
     environment:
       ACCEPT_EULA: "Y"
-      # La contraseña sale del archivo Docker/.env
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Falta MSSQL_SA_PASSWORD. Copia Docker/.env.example a Docker/.env y define la contraseña}
-
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Falta MSSQL_SA_PASSWORD. Copia Docker/.env.example a Docker/.env y define la contrasena}
+      MSSQL_MEMORY_LIMIT_MB: ${MSSQL_MEMORY_LIMIT_MB:-2048}
     ports:
-      - "1434:1433"
-
+      # Solo accesible desde la propia maquina (para herramientas como Azure Data Studio por tunel SSH).
+      # En la VPS NO queda expuesta a internet.
+      - "127.0.0.1:1435:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
+    restart: unless-stopped
 
+  # ---------------- API (.NET 10) ----------------
+  # Al arrancar espera a SQL Server y crea la base de datos y las tablas si no existen.
+  api:
+    build:
+      context: ..
+      dockerfile: Backend/SistemaClimatico/Dockerfile
+    container_name: sistema-climatico-api
+    depends_on:
+      - sqlserver
+    # JWT_KEY, ADMIN_CORREO y ADMIN_PASSWORD deben estar en Docker/.env. (No se marcan como
+    # obligatorios aqui para que "docker compose up -d sqlserver" siga funcionando solo con la
+    # contrasena de SQL; si falta JWT_KEY la API se detiene al arrancar y lo explica en el log.)
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__SistemaClimatico: "Server=sqlserver,1433;Database=SistemaClimatico;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      Jwt__Key: ${JWT_KEY:-}
+      SeedAdmin__Correo: ${ADMIN_CORREO:-}
+      SeedAdmin__Password: ${ADMIN_PASSWORD:-}
+      SeedAdmin__Nombre: ${ADMIN_NOMBRE:-Administrador}
+      Cors__AllowedOrigins__0: ${PUBLIC_URL:-http://localhost}
+      Simulador__IntervaloSegundos: ${SIMULADOR_INTERVALO:-5}
+      Simulador__ProbabilidadEvento: ${SIMULADOR_PROBABILIDAD:-0.004}
+    # No se publica ningun puerto: solo el sitio web (Caddy) habla con la API, por la red interna de Docker.
+    restart: unless-stopped
+
+  # ---------------- Sitio web (Angular + Caddy) ----------------
+  web:
+    build:
+      context: ..
+      dockerfile: Frontend/SistemaClimaticoWeb/Dockerfile
+    container_name: sistema-climatico-web
+    depends_on:
+      - api
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - caddy_data:/data        # certificados HTTPS
+      - caddy_config:/config
     restart: unless-stopped
 
 volumes:
   sqlserver_data:
+  caddy_data:
+  caddy_config:

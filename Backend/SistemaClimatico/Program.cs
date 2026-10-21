@@ -1,8 +1,10 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SistemaClimatico.Hubs;
+using SistemaClimatico.Utilidades;
 using SistemaClimatico.Models;
 using SistemaClimatico.Services;
 
@@ -24,7 +26,8 @@ builder.Services.AddDbContext<SistemaClimaticoContext>(options =>
     options.UseSqlServer(connectionString));
 
 // Controllers (Sensores, Alertas, Historial, Auth, Bitácora)
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new FechaUtcConverter()));
 
 // CORS: orígenes permitidos configurables (Cors:AllowedOrigins). Por defecto, Angular en local.
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
@@ -42,7 +45,8 @@ builder.Services.AddCors(options =>
 });
 
 // SignalR: canal de tiempo real hacia el navegador (/hubs/monitoreo)
-builder.Services.AddSignalR();
+builder.Services.AddSignalR()
+    .AddJsonProtocol(o => o.PayloadSerializerOptions.Converters.Add(new FechaUtcConverter()));
 
 // Tiempo real y simulación de sensores
 builder.Services.AddSingleton<SimuladorControl>();
@@ -114,8 +118,11 @@ var app = builder.Build();
 // Crea el primer Administrador si no existe ninguno (ver Services/AdminSeeder.cs)
 using (var scope = app.Services.CreateScope())
 {
-    // Primero el esquema (tabla Comunidades y columnas nuevas de Sensores), luego los datos iniciales.
+    // 1. Crea la base y las tablas si todavía no existen (primer arranque en Docker / VPS).
+    await InicializadorBaseDatos.InicializarAsync(scope.ServiceProvider);
+    // 2. Agrega lo de las fases nuevas (tabla Comunidades y columnas nuevas de Sensores).
     await EsquemaBaseDatos.AplicarAsync(scope.ServiceProvider);
+    // 3. Datos iniciales.
     await AdminSeeder.SembrarAsync(scope.ServiceProvider);
     await SensoresDemoSeeder.SembrarAsync(scope.ServiceProvider);
     await ComunidadesDemoSeeder.SembrarAsync(scope.ServiceProvider);
@@ -127,7 +134,21 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// Detrás de un proxy (Caddy en Docker) la API recibe HTTP plano: se confía en los
+// encabezados X-Forwarded-* para conocer el protocolo y la IP reales del visitante.
+var forwarded = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+forwarded.KnownIPNetworks.Clear();
+forwarded.KnownProxies.Clear();
+app.UseForwardedHeaders(forwarded);
+
+// En producción el HTTPS lo maneja el proxy (Caddy); redirigir aquí solo causaría un ciclo.
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
 
 // CORS: permitir peticiones desde Angular
 app.UseCors("Frontend");
@@ -140,6 +161,9 @@ app.MapControllers();
 
 // Canal de tiempo real (solo usuarios autenticados, ver MonitoreoHub)
 app.MapHub<MonitoreoHub>("/hubs/monitoreo");
+
+// Comprobación de salud para monitores externos (no toca la base de datos ni pide login)
+app.MapGet("/health", () => Results.Ok(new { estado = "ok" })).AllowAnonymous();
 
 // Prueba de conexión con la base de datos (ahora requiere estar autenticado)
 app.MapGet("/db-test", async (SistemaClimaticoContext db) =>

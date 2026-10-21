@@ -15,7 +15,7 @@ IF OBJECT_ID(N'dbo.Comunidades', N'U') IS NULL
         Latitud DECIMAL(9,6) NOT NULL,
         Longitud DECIMAL(9,6) NOT NULL,
         Activa BIT NOT NULL DEFAULT 1,
-        FechaCreacion DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+        FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
     );
 GO
 

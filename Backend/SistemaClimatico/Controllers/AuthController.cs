@@ -60,7 +60,7 @@ public class AuthController : ControllerBase
             Correo = request.Correo,
             Rol = rol,
             Activo = true,
-            FechaCreacion = DateTime.Now
+            FechaCreacion = DateTime.UtcNow
         };
 
         usuario.PasswordHash = _hasher.HashPassword(usuario, request.Password);

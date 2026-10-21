@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SistemaClimatico.Dtos;
+using SistemaClimatico.Utilidades;
 
 namespace SistemaClimatico.Controllers;
 
@@ -32,11 +33,15 @@ public class HistorialController : ControllerBase
         if (!string.IsNullOrWhiteSpace(tipoFenomeno))
             query = query.Where(h => h.TipoFenomeno == tipoFenomeno);
 
+        // Las fechas se guardan en UTC: los filtros se convierten antes de consultar.
+        var desdeUtc = desde.HasValue ? FechaUtil.AUtc(desde.Value) : default;
+        var hastaUtc = hasta.HasValue ? FechaUtil.HastaInclusivo(hasta.Value) : default;
+
         if (desde.HasValue)
-            query = query.Where(h => h.FechaHora >= desde.Value);
+            query = query.Where(h => h.FechaHora >= desdeUtc);
 
         if (hasta.HasValue)
-            query = query.Where(h => h.FechaHora <= hasta.Value);
+            query = query.Where(h => h.FechaHora <= hastaUtc);
 
         var historial = await query
             .OrderByDescending(h => h.FechaHora)

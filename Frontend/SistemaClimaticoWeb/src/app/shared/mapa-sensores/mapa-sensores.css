@@ -1,4 +1,4 @@
-@import 'leaflet/dist/leaflet.css';
+/* La hoja de estilos de Leaflet se carga como estilo global (angular.json -> styles). */
 
 .mapa-caja { width: 100%; }
 .mapa-contenedor {

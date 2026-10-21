@@ -37,7 +37,7 @@ public static class SensoresDemoSeeder
             foreach (var sensor in demo)
             {
                 sensor.Activo = true;
-                sensor.FechaCreacion = DateTime.Now;
+                sensor.FechaCreacion = DateTime.UtcNow;
                 db.Sensores.Add(sensor);
             }
 

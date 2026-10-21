@@ -45,7 +45,7 @@ public class ProcesadorLecturas
         {
             IdSensor = sensor.IdSensor,
             Valor = valor,
-            FechaHora = DateTime.Now
+            FechaHora = DateTime.UtcNow
         };
         _db.LecturasSensores.Add(lectura);
         await _db.SaveChangesAsync(ct);
@@ -72,7 +72,7 @@ public class ProcesadorLecturas
                     TipoFenomeno = evaluacion.TipoFenomeno,
                     Mensaje = evaluacion.Mensaje,
                     ValorDetectado = valor,
-                    FechaHora = DateTime.Now,
+                    FechaHora = DateTime.UtcNow,
                     Atendida = false
                 };
                 _db.Alertas.Add(alerta);
@@ -83,7 +83,7 @@ public class ProcesadorLecturas
                     IdAlerta = alerta.IdAlerta,
                     TipoFenomeno = evaluacion.TipoFenomeno,
                     Descripcion = evaluacion.Mensaje,
-                    FechaHora = DateTime.Now
+                    FechaHora = DateTime.UtcNow
                 });
                 await _db.SaveChangesAsync(ct);
             }
@@ -128,7 +128,7 @@ public class ProcesadorLecturas
     // ¿Ya hubo una alerta igual (sensor + fenómeno + nivel) dentro del tiempo de anti-rebote?
     private Task<bool> HayAlertaRecienteAsync(int idSensor, string tipoFenomeno, string nivel, CancellationToken ct)
     {
-        var desde = DateTime.Now.AddMinutes(-_cooldownMinutos);
+        var desde = DateTime.UtcNow.AddMinutes(-_cooldownMinutos);
 
         return _db.Alertas.AnyAsync(a =>
             a.IdSensor == idSensor

@@ -1,0 +1,48 @@
+# Servidor web del sistema (Caddy). Hace tres cosas:
+#   1. Entrega la aplicacion Angular (archivos estaticos).
+#   2. Reenvia /api y /hubs (tiempo real, SignalR) a la API .NET.
+#   3. Si SITE_ADDRESS es un dominio, consigue y renueva solo el certificado HTTPS (Let's Encrypt).
+#
+# SITE_ADDRESS (archivo Docker/.env):
+#   :80              -> solo HTTP, sin dominio (por defecto; sirve para probar en tu PC o con la IP de la VPS)
+#   midominio.com    -> HTTPS automatico (el dominio debe apuntar a la IP de la VPS y los puertos 80 y 443 deben estar abiertos)
+
+{$SITE_ADDRESS::80} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	# API REST, canal en tiempo real (WebSocket) y comprobacion de salud -> contenedor "api"
+	@backend path /api/* /hubs/* /health
+	handle @backend {
+		reverse_proxy api:8080
+	}
+
+	# Los archivos .js, .css, fuentes e imagenes llevan un codigo en el nombre que cambia con cada version
+	# (p. ej. main-GBICIN3Y.js): se pueden guardar en el navegador por un ano.
+	@estaticos path_regexp estaticos ^/.+-[A-Za-z0-9_]{8}\.(js|css|woff2?|png)$
+	handle @estaticos {
+		root * /srv
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
+	# Todo lo demas es la aplicacion Angular
+	handle {
+		root * /srv
+
+		# Si no hay un archivo con ese nombre (p. ej. /dashboard), se entrega la pagina principal
+		# y Angular decide que pantalla mostrar.
+		try_files {path} /index.csr.html
+
+		# La pagina principal nunca se guarda en cache (asi las actualizaciones se ven de inmediato)
+		header Cache-Control "no-cache"
+
+		file_server
+	}
+}

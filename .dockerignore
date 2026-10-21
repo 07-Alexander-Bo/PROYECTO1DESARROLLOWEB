@@ -1,0 +1,15 @@
+# Lo que NO se envia a Docker al construir las imagenes (ahorra cientos de MB y evita filtrar secretos).
+.git
+.gitignore
+**/node_modules
+**/bin
+**/obj
+**/dist
+**/.angular
+**/.vs
+**/.vscode
+**/*.user
+Docker/.env
+**/.env
+docs
+*.md

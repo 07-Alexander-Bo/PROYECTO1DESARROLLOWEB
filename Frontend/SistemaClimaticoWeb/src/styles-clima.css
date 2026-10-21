@@ -1,7 +1,8 @@
 /* Estilos del Sistema de Monitoreo Climatico.
    Agregalo con: @import './styles-clima.css'; al inicio de tu styles.css existente. */
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+/* Las fuentes (Space Grotesk, Inter, IBM Plex Mono) se cargan desde angular.json -> styles (paquetes @fontsource):
+   van dentro de la aplicacion, asi que no dependen de Google ni de internet. */
 
 :root {
   --sc-bg: #0E211C;
