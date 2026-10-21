@@ -54,6 +54,8 @@ export class Alertas implements OnInit, OnDestroy {
 
     // Al reconectar se vuelve a pedir la lista, por si se perdio algo.
     this.subs.add(this.tiempoReal.conectado$.subscribe(() => this.cargar(false)));
+    // Reinicio del monitoreo: ya no hay alertas.
+    this.subs.add(this.tiempoReal.monitoreoReiniciado$.subscribe(() => this.cargar(false)));
   }
 
   ngOnDestroy() {

@@ -27,4 +27,9 @@ public class EstadoSensorDto
     public string Nivel { get; set; } = null!;
     public string? TipoFenomeno { get; set; }
     public string Mensaje { get; set; } = null!;
+
+    // Ubicación para el mapa
+    public int? IdComunidad { get; set; }
+    public decimal? Latitud { get; set; }
+    public decimal? Longitud { get; set; }
 }

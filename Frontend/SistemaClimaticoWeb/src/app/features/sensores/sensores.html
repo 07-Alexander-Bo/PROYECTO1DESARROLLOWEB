@@ -9,12 +9,12 @@
 @if (cargando()) {
   <div style="color:var(--sc-text-muted);">Cargando sensores...</div>
 } @else {
-  <div class="sc-card" style="padding:0; overflow:hidden;">
+  <div class="sc-card" style="padding:0; overflow:auto;">
     <table class="sc-table">
       <thead>
         <tr>
-          <th>Sensor</th><th>Tipo</th><th>Ubicacion</th><th>Estado</th>
-          @if (puedeAdministrar) { <th>Registrar lectura</th><th>Accion</th> }
+          <th>Sensor</th><th>Tipo</th><th>Comunidad</th><th>Ubicacion</th><th>Estado</th>
+          @if (puedeAdministrar) { <th>Fijar valor</th><th>Accion</th> }
         </tr>
       </thead>
       <tbody>
@@ -22,6 +22,7 @@
           <tr>
             <td>{{ s.nombre }}</td>
             <td>{{ s.tipo }}</td>
+            <td style="color:var(--sc-text-muted);">{{ s.nombreComunidad || '-' }}</td>
             <td style="color:var(--sc-text-muted);">{{ s.ubicacion || '-' }}</td>
             <td>
               <span class="sc-pill" [class]="s.activo ? 'sc-pill-Verde' : ''" [style.color]="s.activo ? '' : 'var(--sc-text-faint)'">
@@ -56,4 +57,10 @@
       </tbody>
     </table>
   </div>
+  @if (puedeAdministrar) {
+    <div style="margin-top:10px; font-size:11.5px; color:var(--sc-text-faint);">
+      El valor que fijes se guarda como una lectura (y puede generar una alerta). El simulador continúa desde ese valor
+      y poco a poco vuelve a su rango normal.
+    </div>
+  }
 }

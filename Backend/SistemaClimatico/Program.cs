@@ -114,8 +114,11 @@ var app = builder.Build();
 // Crea el primer Administrador si no existe ninguno (ver Services/AdminSeeder.cs)
 using (var scope = app.Services.CreateScope())
 {
+    // Primero el esquema (tabla Comunidades y columnas nuevas de Sensores), luego los datos iniciales.
+    await EsquemaBaseDatos.AplicarAsync(scope.ServiceProvider);
     await AdminSeeder.SembrarAsync(scope.ServiceProvider);
     await SensoresDemoSeeder.SembrarAsync(scope.ServiceProvider);
+    await ComunidadesDemoSeeder.SembrarAsync(scope.ServiceProvider);
 }
 
 // OpenAPI

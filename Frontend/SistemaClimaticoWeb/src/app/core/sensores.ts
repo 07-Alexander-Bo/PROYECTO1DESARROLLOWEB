@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import {
-  SensorDto, CrearSensorDto, ActualizarSensorDto, CrearLecturaDto, LecturaDto,
+  SensorDto, CrearSensorDto, ActualizarSensorDto, CrearLecturaDto, LecturaDto, SerieSensorDto,
 } from './models';
 
 @Injectable({ providedIn: 'root' })
@@ -50,5 +50,12 @@ export class SensoresService {
   // POST /api/sensores/{id}/lecturas
   registrarLectura(id: number, dto: CrearLecturaDto) {
     return this.http.post<LecturaDto>(`${this.baseUrl}/${id}/lecturas`, dto);
+  }
+
+  // GET /api/lecturas/series?puntos=&idComunidad=  (para los graficos del dashboard)
+  series(puntos = 60, idComunidad?: number | null) {
+    let params = new HttpParams().set('puntos', String(puntos));
+    if (idComunidad) params = params.set('idComunidad', String(idComunidad));
+    return this.http.get<SerieSensorDto[]>(`${environment.apiUrl}/lecturas/series`, { params });
   }
 }

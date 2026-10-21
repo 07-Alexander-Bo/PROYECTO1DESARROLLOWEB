@@ -1,0 +1,14 @@
+<div class="mapa-caja">
+  <div #contenedor class="mapa-contenedor" [style.height.px]="alto()" role="application"
+       aria-label="Mapa de la comunidad con el estado de cada sensor"></div>
+
+  <div class="mapa-leyenda">
+    <span><i style="background:var(--sc-verde)"></i>Normal</span>
+    <span><i style="background:var(--sc-amarillo)"></i>Precaución</span>
+    <span><i style="background:var(--sc-naranja)"></i>Alerta</span>
+    <span><i style="background:var(--sc-rojo)"></i>Emergencia</span>
+    @if (sinUbicacion() > 0) {
+      <span class="mapa-aviso">{{ sinUbicacion() }} sensor(es) sin ubicación asignada</span>
+    }
+  </div>
+</div>

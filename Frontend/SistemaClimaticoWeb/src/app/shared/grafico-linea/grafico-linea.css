@@ -1,0 +1,27 @@
+:host { display: block; width: 100%; }
+
+.grafico { position: relative; width: 100%; line-height: 0; }
+svg { display: block; max-width: 100%; touch-action: pan-y; }
+
+.rejilla { stroke: var(--sc-border); stroke-width: 1; opacity: 0.55; }
+.eje { fill: var(--sc-text-faint); font-size: 10.5px; font-family: 'IBM Plex Mono', monospace; }
+
+.umbral { stroke-width: 1; stroke-dasharray: 4 4; opacity: 0.7; }
+.umbral-texto { fill: var(--sc-text-muted); font-size: 9.5px; font-family: 'IBM Plex Mono', monospace; }
+
+.linea { fill: none; stroke: var(--sc-accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.area { stroke: none; }
+.punto { fill: var(--sc-accent); stroke: var(--sc-panel); stroke-width: 2; }
+.guia { stroke: var(--sc-text-muted); stroke-width: 1; stroke-dasharray: 2 3; }
+.captura { fill: transparent; cursor: crosshair; }
+
+.globo {
+  position: absolute; pointer-events: none; line-height: 1.3;
+  transform: translate(10px, -120%);
+  background: var(--sc-bg); border: 1px solid var(--sc-border); border-radius: 8px;
+  padding: 6px 9px; white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+.globo-izq { transform: translate(calc(-100% - 10px), -120%); }
+.globo-valor { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--sc-text); }
+.globo-valor span { font-size: 10.5px; color: var(--sc-text-muted); }
+.globo-hora { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--sc-text-faint); }

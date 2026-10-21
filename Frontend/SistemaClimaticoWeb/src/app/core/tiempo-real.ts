@@ -29,6 +29,8 @@ export class TiempoRealService {
   readonly alertaAtendida$ = new Subject<number>();
   /** Se creo, edito, activo o desactivo un sensor. */
   readonly sensoresActualizados$ = new Subject<void>();
+  /** Un administrador reinicio el monitoreo: se borraron lecturas, alertas e historial. */
+  readonly monitoreoReiniciado$ = new Subject<void>();
   /** Se emite cada vez que se (re)establece la conexion: las pantallas recargan por si se perdio algo. */
   readonly conectado$ = new Subject<void>();
 
@@ -57,6 +59,7 @@ export class TiempoRealService {
     hub.on('AlertaNueva', (a: AlertaDto) => this.alertaNueva$.next(a));
     hub.on('AlertaAtendida', (id: number) => this.alertaAtendida$.next(id));
     hub.on('SensoresActualizados', () => this.sensoresActualizados$.next());
+    hub.on('MonitoreoReiniciado', () => this.monitoreoReiniciado$.next());
     hub.on('SimuladorEstado', (activo: boolean) => this.simuladorActivo.set(activo));
 
     hub.onreconnecting(() => this.estado.set('reconectando'));

@@ -20,6 +20,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/admin').then((m) => m.Admin),
       },
       {
+        // Bitacora de acciones: solo Administrador (la API tambien lo exige).
+        path: 'bitacora',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/bitacora/bitacora').then((m) => m.Bitacora),
+      },
+      {
         // Crear usuarios: solo Administrador (la API tambien lo exige).
         path: 'registro',
         canActivate: [adminGuard],

@@ -18,6 +18,7 @@ public class SimuladorLecturasService : BackgroundService
 
     // Estado de simulación por sensor (id -> valor actual y evento en curso).
     private readonly Dictionary<int, EstadoSimulacion> _estados = new();
+    private int _generacionVista;
 
     public SimuladorLecturasService(
         IServiceScopeFactory scopeFactory,
@@ -50,7 +51,10 @@ public class SimuladorLecturasService : BackgroundService
 
                 try
                 {
-                    await GenerarCicloAsync(stoppingToken);
+                    // El candado evita escribir lecturas mientras se reinicia el monitoreo.
+                    await _control.Candado.WaitAsync(stoppingToken);
+                    try { await GenerarCicloAsync(stoppingToken); }
+                    finally { _control.Candado.Release(); }
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {
@@ -75,6 +79,13 @@ public class SimuladorLecturasService : BackgroundService
         var db = scope.ServiceProvider.GetRequiredService<SistemaClimaticoContext>();
         var procesador = scope.ServiceProvider.GetRequiredService<ProcesadorLecturas>();
 
+        // Si se reinició el monitoreo, se olvida el estado anterior de cada sensor.
+        if (_generacionVista != _control.Generacion)
+        {
+            _estados.Clear();
+            _generacionVista = _control.Generacion;
+        }
+
         var sensores = await db.Sensores
             .Where(s => s.Activo)
             .OrderBy(s => s.IdSensor)
@@ -85,6 +96,15 @@ public class SimuladorLecturasService : BackgroundService
             if (!_control.Activo) break; // pausado a mitad del ciclo
 
             var estado = await ObtenerEstadoAsync(db, sensor, ct);
+
+            // Valor fijado a mano: la simulación sigue desde ese punto.
+            if (_control.TomarValorForzado(sensor.IdSensor, out var forzado))
+            {
+                estado.Actual = forzado;
+                estado.ObjetivoEvento = null;
+                estado.TicksRestantes = 0;
+            }
+
             var valor = _generador.Siguiente(sensor.Tipo, estado);
 
             await procesador.RegistrarLecturaAsync(sensor, valor, ct);

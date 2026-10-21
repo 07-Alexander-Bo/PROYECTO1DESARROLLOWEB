@@ -1,1 +1,10 @@
 :host { display: block; }
+
+.rejilla-graficos { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; }
+.tarjeta-grafico { min-width: 0; }
+.selector-ventana { display: flex; align-items: center; gap: 6px; }
+.selector-ventana .sc-btn { padding: 4px 10px; }
+
+@media (max-width: 420px) {
+  .rejilla-graficos { grid-template-columns: 1fr; }
+}

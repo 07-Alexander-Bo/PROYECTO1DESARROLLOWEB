@@ -58,4 +58,29 @@ public class BitacoraController : ControllerBase
 
         return Ok(registros);
     }
+
+    // GET api/bitacora/acciones  -> tipos de acción registrados (para el filtro)
+    [HttpGet("acciones")]
+    public async Task<ActionResult<IEnumerable<string>>> GetAcciones()
+    {
+        var acciones = await _db.BitacoraAcciones
+            .Select(b => b.Accion)
+            .Distinct()
+            .OrderBy(a => a)
+            .ToListAsync();
+
+        return Ok(acciones);
+    }
+
+    // GET api/bitacora/usuarios  -> usuarios del sistema (para el filtro)
+    [HttpGet("usuarios")]
+    public async Task<ActionResult<IEnumerable<UsuarioFiltroDto>>> GetUsuarios()
+    {
+        var usuarios = await _db.Usuarios
+            .OrderBy(u => u.NombreCompleto)
+            .Select(u => new UsuarioFiltroDto { IdUsuario = u.IdUsuario, NombreCompleto = u.NombreCompleto })
+            .ToListAsync();
+
+        return Ok(usuarios);
+    }
 }

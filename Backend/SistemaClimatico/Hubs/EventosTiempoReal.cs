@@ -20,4 +20,8 @@ public static class EventosTiempoReal
 
     // El simulador se pausó o reanudó. Payload: bool (true = activo)
     public const string SimuladorEstado = "SimuladorEstado";
+
+    // Un administrador reinició el monitoreo (se borraron lecturas, alertas e historial).
+    // Sin payload: las pantallas vuelven a pedir sus datos.
+    public const string MonitoreoReiniciado = "MonitoreoReiniciado";
 }

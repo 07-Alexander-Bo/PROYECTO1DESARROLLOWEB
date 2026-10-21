@@ -1,0 +1,74 @@
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+  <div>
+    <div class="sc-display" style="font-size:15px;">Bitácora de acciones</div>
+    <div style="font-size:11.5px; color:var(--sc-text-muted);">Qué hizo cada usuario en el sistema</div>
+  </div>
+  <button class="sc-btn" type="button" [disabled]="registros().length === 0" (click)="exportarCsv()">Exportar CSV</button>
+</div>
+
+<form class="sc-card filtros" (ngSubmit)="cargar()">
+  <div>
+    <label class="sc-label" for="f-usuario">Usuario</label>
+    <select id="f-usuario" class="sc-select" name="usuario" [(ngModel)]="idUsuario">
+      <option [ngValue]="null">Todos</option>
+      @for (u of usuarios(); track u.idUsuario) { <option [ngValue]="u.idUsuario">{{ u.nombreCompleto }}</option> }
+    </select>
+  </div>
+  <div>
+    <label class="sc-label" for="f-accion">Acción</label>
+    <select id="f-accion" class="sc-select" name="accion" [(ngModel)]="accion">
+      <option value="">Todas</option>
+      @for (a of acciones(); track a) { <option [value]="a">{{ nombreAccion(a) }}</option> }
+    </select>
+  </div>
+  <div>
+    <label class="sc-label" for="f-desde">Desde</label>
+    <input id="f-desde" class="sc-input" type="date" name="desde" [(ngModel)]="desde" />
+  </div>
+  <div>
+    <label class="sc-label" for="f-hasta">Hasta</label>
+    <input id="f-hasta" class="sc-input" type="date" name="hasta" [(ngModel)]="hasta" />
+  </div>
+  <div>
+    <label class="sc-label" for="f-limite">Mostrar</label>
+    <select id="f-limite" class="sc-select" name="limite" [(ngModel)]="limite">
+      @for (l of limites; track l) { <option [ngValue]="l">{{ l }} registros</option> }
+    </select>
+  </div>
+  <div class="acciones-filtro">
+    <button class="sc-btn sc-btn-primary" type="submit">Filtrar</button>
+    <button class="sc-btn" type="button" (click)="limpiar()">Limpiar</button>
+  </div>
+</form>
+
+@if (error()) {
+  <div class="sc-card" style="color:var(--sc-rojo); margin-top:14px;">{{ error() }}</div>
+}
+
+@if (cargando()) {
+  <div style="color:var(--sc-text-muted); margin-top:14px;">Cargando bitácora...</div>
+} @else {
+  <div class="sc-card" style="padding:0; overflow:auto; margin-top:14px;">
+    <table class="sc-table">
+      <thead>
+        <tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Detalle</th></tr>
+      </thead>
+      <tbody>
+        @if (registros().length === 0) {
+          <tr><td colspan="4" style="text-align:center; color:var(--sc-text-muted);">No hay registros con esos filtros.</td></tr>
+        }
+        @for (r of registros(); track r.idBitacora) {
+          <tr>
+            <td class="sc-mono" style="color:var(--sc-text-muted); font-size:12px; white-space:nowrap;">{{ r.fechaHora | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+            <td>{{ r.nombreUsuario || 'Sistema' }}</td>
+            <td><span class="etiqueta" [class]="'etiqueta ' + tono(r.accion)">{{ nombreAccion(r.accion) }}</span></td>
+            <td style="color:var(--sc-text-muted);">{{ r.descripcion }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:8px; font-size:11.5px; color:var(--sc-text-faint);">
+    {{ registros().length }} registros (los más recientes primero).
+  </div>
+}

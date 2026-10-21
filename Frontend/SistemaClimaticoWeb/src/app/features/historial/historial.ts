@@ -30,6 +30,8 @@ export class Historial implements OnInit, OnDestroy {
     // (tambien al reconectar, por si se perdio algo mientras no habia conexion).
     this.subs.add(this.tiempoReal.alertaNueva$.subscribe(() => this.cargar()));
     this.subs.add(this.tiempoReal.conectado$.subscribe(() => this.cargar()));
+    // Reinicio del monitoreo: el historial queda vacio.
+    this.subs.add(this.tiempoReal.monitoreoReiniciado$.subscribe(() => this.cargar()));
   }
 
   ngOnDestroy() {

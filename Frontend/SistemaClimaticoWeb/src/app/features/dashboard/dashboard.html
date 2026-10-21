@@ -14,7 +14,17 @@
       <span class="sc-pill-dot"></span>
       Estado general: {{ etiquetaNivel(nivelComunidad()) }}
     </span>
-    <span style="font-size:12.5px; color:var(--sc-text-muted);">{{ estados().length }} sensores activos</span>
+    <span style="font-size:12.5px; color:var(--sc-text-muted);">{{ estadosVisibles().length }} sensores activos</span>
+
+    @if (comunidades().length > 1) {
+      <select class="sc-select" style="width:auto; padding:6px 10px; font-size:12.5px;"
+              aria-label="Filtrar por comunidad" (change)="cambiarComunidad($any($event.target).value)">
+        <option value="" [selected]="comunidadSel() === null">Todas las comunidades</option>
+        @for (c of comunidades(); track c.idComunidad) {
+          <option [value]="c.idComunidad" [selected]="comunidadSel() === c.idComunidad">{{ c.nombre }}</option>
+        }
+      </select>
+    }
 
     <span style="flex:1;"></span>
 
@@ -34,7 +44,7 @@
   </div>
 
   <div class="sc-grid-sensores" style="margin-bottom:24px;">
-    @for (e of estados(); track e.idSensor) {
+    @for (e of estadosVisibles(); track e.idSensor) {
       <div class="sc-card" [style.border-color]="e.nivel === 'Verde' ? '' : colorNivel(e.nivel)">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <span style="font-size:11.5px; color:var(--sc-text-muted);">{{ e.tipoSensor }}</span>
@@ -58,6 +68,42 @@
         }
       </div>
     }
+  </div>
+
+  <!-- ===== Evolucion de los datos ===== -->
+  <div style="display:flex; align-items:center; justify-content:space-between; margin:0 0 12px; flex-wrap:wrap; gap:8px;">
+    <div class="sc-display" style="font-size:14px;">Evolución de los datos</div>
+    <div class="selector-ventana" role="group" aria-label="Cantidad de lecturas por gráfico">
+      <span style="font-size:11.5px; color:var(--sc-text-muted);">Últimas</span>
+      @for (n of ventanas; track n) {
+        <button class="sc-btn" type="button" [class.sc-btn-primary]="ventana() === n" (click)="cambiarVentana(n)">{{ n }}</button>
+      }
+      <span style="font-size:11.5px; color:var(--sc-text-muted);">lecturas</span>
+    </div>
+  </div>
+
+  <div class="rejilla-graficos" style="margin-bottom:24px;">
+    @for (e of estadosVisibles(); track e.idSensor) {
+      <div class="sc-card tarjeta-grafico">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; gap:8px;">
+          <div>
+            <div style="font-size:13px;">{{ e.nombreSensor }}</div>
+            <div style="font-size:11px; color:var(--sc-text-faint);">{{ etiquetaTipo(e.tipoSensor) }}</div>
+          </div>
+          <span class="sc-pill" [class]="'sc-pill sc-pill-' + e.nivel"><span class="sc-pill-dot"></span>{{ etiquetaNivel(e.nivel) }}</span>
+        </div>
+        <app-grafico-linea [puntos]="puntosDe(e.idSensor)" [unidad]="e.unidadMedida" [tipo]="e.tipoSensor" [titulo]="e.nombreSensor" />
+      </div>
+    }
+  </div>
+
+  <!-- ===== Mapa de la comunidad ===== -->
+  <div class="sc-card" style="margin-bottom:24px;">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
+      <span class="sc-display" style="font-size:14px;">Mapa de la comunidad</span>
+      <span style="font-size:11.5px; color:var(--sc-text-muted);">Toca un sensor para ver su estado</span>
+    </div>
+    <app-mapa-sensores [estados]="estadosVisibles()" [comunidades]="comunidades()" [alto]="360" />
   </div>
 
   <div class="sc-card">

@@ -1,0 +1,55 @@
+<div class="grafico" (mouseleave)="salir()">
+  <svg [attr.viewBox]="'0 0 ' + ancho() + ' ' + alto" [attr.width]="ancho()" [attr.height]="alto"
+       role="img" [attr.aria-label]="resumen()">
+    <defs>
+      <linearGradient [attr.id]="idRelleno" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--sc-accent)" stop-opacity="0.28" />
+        <stop offset="100%" stop-color="var(--sc-accent)" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+
+    <!-- Cuadricula suave y eje Y -->
+    @for (t of ticksY(); track t.y) {
+      <line class="rejilla" [attr.x1]="44" [attr.x2]="ancho() - 16" [attr.y1]="t.y" [attr.y2]="t.y" />
+      <text class="eje" [attr.x]="38" [attr.y]="t.y + 4" text-anchor="end">{{ t.texto }}</text>
+    }
+
+    <!-- Eje X -->
+    @for (t of ticksX(); track t.x) {
+      <text class="eje" [attr.x]="t.x" [attr.y]="alto - 8" [attr.text-anchor]="t.anchor">{{ t.texto }}</text>
+    }
+
+    <!-- Umbrales de riesgo -->
+    @for (u of umbrales(); track u.y) {
+      <line class="umbral" [attr.x1]="44" [attr.x2]="ancho() - 16" [attr.y1]="u.y" [attr.y2]="u.y" [attr.stroke]="u.color" />
+      <text class="umbral-texto" [attr.x]="ancho() - 18" [attr.y]="u.y - 4" text-anchor="end">{{ u.etiqueta }}</text>
+    }
+
+    @if (puntos().length === 0) {
+      <text class="eje" [attr.x]="ancho() / 2" [attr.y]="alto / 2" text-anchor="middle">Esperando lecturas…</text>
+    } @else {
+      <path class="area" [attr.d]="area()" [attr.fill]="'url(#' + idRelleno + ')'" />
+      <path class="linea" [attr.d]="linea()" />
+
+      @if (ultimo(); as u) {
+        <circle class="punto" [attr.cx]="u.x" [attr.cy]="u.y" r="4.5" />
+      }
+
+      @if (hover(); as h) {
+        <line class="guia" [attr.x1]="h.x" [attr.x2]="h.x" [attr.y1]="14" [attr.y2]="alto - 26" />
+        <circle class="punto punto-hover" [attr.cx]="h.x" [attr.cy]="h.y" r="5" />
+      }
+    }
+
+    <!-- Capa transparente que recibe el mouse / el toque -->
+    <rect class="captura" x="44" y="14" [attr.width]="ancho() - 60" [attr.height]="alto - 40"
+          (mousemove)="mover($event)" (pointermove)="mover($event)" (pointerdown)="mover($event)" />
+  </svg>
+
+  @if (hover(); as h) {
+    <div class="globo" [style.left.px]="h.x" [style.top.px]="h.y" [class.globo-izq]="h.derecha">
+      <div class="globo-valor">{{ h.p.v }} <span>{{ unidad() }}</span></div>
+      <div class="globo-hora">{{ h.hora }}</div>
+    </div>
+  }
+</div>

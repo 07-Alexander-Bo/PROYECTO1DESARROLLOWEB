@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +18,8 @@ public partial class SistemaClimaticoContext : DbContext
     public virtual DbSet<Alerta> Alertas { get; set; }
 
     public virtual DbSet<BitacoraAccione> BitacoraAcciones { get; set; }
+
+    public virtual DbSet<Comunidad> Comunidades { get; set; }
 
     public virtual DbSet<HistorialEvento> HistorialEventos { get; set; }
 
@@ -101,6 +103,27 @@ public partial class SistemaClimaticoContext : DbContext
             entity.Property(e => e.Tipo).HasMaxLength(50);
             entity.Property(e => e.Ubicacion).HasMaxLength(200);
             entity.Property(e => e.UnidadMedida).HasMaxLength(30);
+            entity.Property(e => e.Latitud).HasColumnType("decimal(9, 6)");
+            entity.Property(e => e.Longitud).HasColumnType("decimal(9, 6)");
+
+            entity.HasOne(d => d.IdComunidadNavigation).WithMany(p => p.Sensores)
+                .HasForeignKey(d => d.IdComunidad)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Sensores_Comunidades");
+        });
+
+        modelBuilder.Entity<Comunidad>(entity =>
+        {
+            entity.HasKey(e => e.IdComunidad);
+
+            entity.ToTable("Comunidades");
+
+            entity.Property(e => e.Activa).HasDefaultValue(true);
+            entity.Property(e => e.Descripcion).HasMaxLength(300);
+            entity.Property(e => e.FechaCreacion).HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.Latitud).HasColumnType("decimal(9, 6)");
+            entity.Property(e => e.Longitud).HasColumnType("decimal(9, 6)");
+            entity.Property(e => e.Nombre).HasMaxLength(100);
         });
 
         modelBuilder.Entity<Usuario>(entity =>

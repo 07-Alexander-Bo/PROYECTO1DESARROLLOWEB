@@ -1,69 +1,243 @@
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
   <div>
-    <div class="sc-display" style="font-size:15px;">Administracion</div>
-    <div style="font-size:11.5px; color:var(--sc-text-muted);">{{ sensores().length }} sensores registrados</div>
+    <div class="sc-display" style="font-size:15px;">Administración</div>
+    <div style="font-size:11.5px; color:var(--sc-text-muted);">
+      {{ sensores().length }} sensores · {{ comunidades().length }} comunidades
+    </div>
   </div>
-  <button class="sc-btn sc-btn-primary" (click)="abierto.set(!abierto())">
-    {{ abierto() ? 'Cancelar' : '+ Agregar sensor' }}
-  </button>
 </div>
 
-@if (abierto()) {
-  <form [formGroup]="form" (ngSubmit)="guardar()" class="sc-card" style="margin-bottom:16px;">
-    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; align-items:end;">
-      <div>
-        <label class="sc-label">Nombre</label>
-        <input class="sc-input" formControlName="nombre" placeholder="Sensor Puente Norte" />
-      </div>
-      <div>
-        <label class="sc-label">Tipo</label>
-        <select class="sc-select" formControlName="tipo">
-          @for (t of tipos; track t) { <option [value]="t">{{ t }}</option> }
-        </select>
-      </div>
-      <div>
-        <label class="sc-label">Unidad de medida</label>
-        <input class="sc-input" formControlName="unidadMedida" placeholder="C, %, km/h, mm, m" />
-      </div>
-      <div>
-        <label class="sc-label">Ubicacion</label>
-        <input class="sc-input" formControlName="ubicacion" placeholder="Sector 3 - Puente" />
-      </div>
-    </div>
-    @if (error()) {
-      <div style="color:var(--sc-rojo); font-size:12px; margin-top:10px;">{{ error() }}</div>
-    }
-    <button class="sc-btn sc-btn-primary" type="submit" [disabled]="guardando()" style="margin-top:12px;">
-      {{ guardando() ? 'Guardando...' : 'Guardar sensor' }}
+<div class="pestanas" role="tablist">
+  <button type="button" role="tab" [class.activa]="pestana() === 'sensores'" [attr.aria-selected]="pestana() === 'sensores'" (click)="pestana.set('sensores')">Sensores</button>
+  <button type="button" role="tab" [class.activa]="pestana() === 'comunidades'" [attr.aria-selected]="pestana() === 'comunidades'" (click)="pestana.set('comunidades')">Comunidades</button>
+  <button type="button" role="tab" [class.activa]="pestana() === 'sistema'" [attr.aria-selected]="pestana() === 'sistema'" (click)="pestana.set('sistema')">Sistema</button>
+</div>
+
+<!-- ======================= SENSORES ======================= -->
+@if (pestana() === 'sensores') {
+  <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+    <button class="sc-btn sc-btn-primary" type="button" (click)="nuevoSensor()">
+      {{ formSensorAbierto() && sensorEditandoId() === null ? 'Cancelar' : '+ Agregar sensor' }}
     </button>
-  </form>
+  </div>
+
+  @if (formSensorAbierto()) {
+    <form [formGroup]="formSensor" (ngSubmit)="guardarSensor()" class="sc-card" style="margin-bottom:16px;">
+      <div class="sc-display" style="font-size:13px; margin-bottom:12px;">
+        {{ sensorEditandoId() === null ? 'Nuevo sensor' : 'Editar sensor' }}
+      </div>
+      <div class="rejilla-form">
+        <div>
+          <label class="sc-label" for="s-nombre">Nombre</label>
+          <input id="s-nombre" class="sc-input" formControlName="nombre" placeholder="Sensor Puente Norte" />
+        </div>
+        <div>
+          <label class="sc-label" for="s-tipo">Tipo</label>
+          <select id="s-tipo" class="sc-select" formControlName="tipo">
+            @for (t of tipos; track t) { <option [value]="t">{{ t }}</option> }
+          </select>
+        </div>
+        <div>
+          <label class="sc-label" for="s-unidad">Unidad de medida</label>
+          <input id="s-unidad" class="sc-input" formControlName="unidadMedida" placeholder="°C, %, km/h, mm, m" />
+        </div>
+        <div>
+          <label class="sc-label" for="s-ubicacion">Ubicación (descripción)</label>
+          <input id="s-ubicacion" class="sc-input" formControlName="ubicacion" placeholder="Sector 3 - Puente" />
+        </div>
+        <div>
+          <label class="sc-label" for="s-comunidad">Comunidad</label>
+          <select id="s-comunidad" class="sc-select" formControlName="idComunidad">
+            <option [ngValue]="null">Sin comunidad</option>
+            @for (c of comunidades(); track c.idComunidad) { <option [ngValue]="c.idComunidad">{{ c.nombre }}</option> }
+          </select>
+        </div>
+        <div>
+          <label class="sc-label" for="s-lat">Latitud en el mapa (opcional)</label>
+          <input id="s-lat" class="sc-input" type="number" step="0.0001" formControlName="latitud" placeholder="14.9400" />
+        </div>
+        <div>
+          <label class="sc-label" for="s-lng">Longitud en el mapa (opcional)</label>
+          <input id="s-lng" class="sc-input" type="number" step="0.0001" formControlName="longitud" placeholder="-91.1100" />
+        </div>
+      </div>
+      <div style="font-size:11.5px; color:var(--sc-text-faint); margin-top:8px;">
+        Si dejas latitud y longitud vacías, el sensor aparece en el centro de su comunidad.
+      </div>
+      @if (errorSensor()) {
+        <div style="color:var(--sc-rojo); font-size:12px; margin-top:10px;">{{ errorSensor() }}</div>
+      }
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button class="sc-btn sc-btn-primary" type="submit" [disabled]="guardandoSensor()">
+          {{ guardandoSensor() ? 'Guardando...' : (sensorEditandoId() === null ? 'Guardar sensor' : 'Guardar cambios') }}
+        </button>
+        <button class="sc-btn" type="button" (click)="cancelarSensor()">Cancelar</button>
+      </div>
+    </form>
+  }
+
+  <div class="sc-card" style="padding:0; overflow:auto;">
+    <table class="sc-table">
+      <thead>
+        <tr><th>Sensor</th><th>Tipo</th><th>Unidad</th><th>Comunidad</th><th>Ubicación</th><th>Estado</th><th>Acción</th></tr>
+      </thead>
+      <tbody>
+        @for (s of sensores(); track s.idSensor) {
+          <tr>
+            <td>{{ s.nombre }}</td>
+            <td>{{ s.tipo }}</td>
+            <td>{{ s.unidadMedida }}</td>
+            <td style="color:var(--sc-text-muted);">{{ s.nombreComunidad || '-' }}</td>
+            <td style="color:var(--sc-text-muted);">{{ s.ubicacion || '-' }}</td>
+            <td>
+              <span class="sc-pill" [class]="s.activo ? 'sc-pill-Verde' : ''" [style.color]="s.activo ? '' : 'var(--sc-text-faint)'">
+                {{ s.activo ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td style="white-space:nowrap;">
+              <button class="sc-btn" type="button" (click)="editarSensor(s)">Editar</button>
+              <button class="sc-btn" type="button" (click)="activarDesactivar(s)">{{ s.activo ? 'Desactivar' : 'Activar' }}</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:10px; font-size:11.5px; color:var(--sc-text-faint);">
+    Para fijar el valor de un sensor a mano usa la pantalla <a routerLink="/sensores" style="color:var(--sc-accent);">Sensores</a>:
+    la simulación continúa desde ese valor.
+  </div>
 }
 
-<div class="sc-card" style="padding:0; overflow:hidden;">
-  <table class="sc-table">
-    <thead>
-      <tr><th>Sensor</th><th>Tipo</th><th>Unidad</th><th>Ubicacion</th><th>Estado</th><th>Accion</th></tr>
-    </thead>
-    <tbody>
-      @for (s of sensores(); track s.idSensor) {
-        <tr>
-          <td>{{ s.nombre }}</td>
-          <td>{{ s.tipo }}</td>
-          <td>{{ s.unidadMedida }}</td>
-          <td style="color:var(--sc-text-muted);">{{ s.ubicacion || '-' }}</td>
-          <td>
-            <span class="sc-pill" [class]="s.activo ? 'sc-pill-Verde' : ''" [style.color]="s.activo ? '' : 'var(--sc-text-faint)'">
-              {{ s.activo ? 'Activo' : 'Inactivo' }}
-            </span>
-          </td>
-          <td><button class="sc-btn" (click)="activarDesactivar(s)">{{ s.activo ? 'Desactivar' : 'Activar' }}</button></td>
-        </tr>
-      }
-    </tbody>
-  </table>
-</div>
+<!-- ======================= COMUNIDADES ======================= -->
+@if (pestana() === 'comunidades') {
+  <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+    <button class="sc-btn sc-btn-primary" type="button" (click)="nuevaComunidad()">
+      {{ formComunidadAbierto() && comunidadEditandoId() === null ? 'Cancelar' : '+ Agregar comunidad' }}
+    </button>
+  </div>
 
-<div style="margin-top:14px; font-size:11.5px; color:var(--sc-text-faint);">
-  "Reiniciar sistema de monitoreo" y "Bitacora de acciones" quedan pendientes:
-  todavia no existe ese endpoint en el backend.
-</div>
+  @if (formComunidadAbierto()) {
+    <form [formGroup]="formComunidad" (ngSubmit)="guardarComunidad()" class="sc-card" style="margin-bottom:16px;">
+      <div class="sc-display" style="font-size:13px; margin-bottom:12px;">
+        {{ comunidadEditandoId() === null ? 'Nueva comunidad' : 'Editar comunidad' }}
+      </div>
+      <div class="rejilla-form">
+        <div>
+          <label class="sc-label" for="c-nombre">Nombre</label>
+          <input id="c-nombre" class="sc-input" formControlName="nombre" placeholder="Aldea Los Encinos" />
+        </div>
+        <div>
+          <label class="sc-label" for="c-desc">Descripción</label>
+          <input id="c-desc" class="sc-input" formControlName="descripcion" placeholder="Zona de cultivo cerca del río" />
+        </div>
+        <div>
+          <label class="sc-label" for="c-lat">Latitud (centro)</label>
+          <input id="c-lat" class="sc-input" type="number" step="0.0001" formControlName="latitud" placeholder="14.9400" />
+        </div>
+        <div>
+          <label class="sc-label" for="c-lng">Longitud (centro)</label>
+          <input id="c-lng" class="sc-input" type="number" step="0.0001" formControlName="longitud" placeholder="-91.1100" />
+        </div>
+      </div>
+      @if (formComunidad.touched && formComunidad.invalid) {
+        <div style="color:var(--sc-rojo); font-size:12px; margin-top:10px;">
+          Completa el nombre y unas coordenadas válidas (latitud -90 a 90, longitud -180 a 180).
+        </div>
+      }
+      @if (errorComunidad()) {
+        <div style="color:var(--sc-rojo); font-size:12px; margin-top:10px;">{{ errorComunidad() }}</div>
+      }
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button class="sc-btn sc-btn-primary" type="submit" [disabled]="guardandoComunidad()">
+          {{ guardandoComunidad() ? 'Guardando...' : (comunidadEditandoId() === null ? 'Guardar comunidad' : 'Guardar cambios') }}
+        </button>
+        <button class="sc-btn" type="button" (click)="cancelarComunidad()">Cancelar</button>
+      </div>
+    </form>
+  }
+
+  @if (errorComunidad() && !formComunidadAbierto()) {
+    <div style="color:var(--sc-rojo); font-size:12px; margin-bottom:10px;">{{ errorComunidad() }}</div>
+  }
+
+  <div class="sc-card" style="padding:0; overflow:auto;">
+    <table class="sc-table">
+      <thead>
+        <tr><th>Comunidad</th><th>Descripción</th><th>Coordenadas</th><th>Sensores</th><th>Acción</th></tr>
+      </thead>
+      <tbody>
+        @if (comunidades().length === 0) {
+          <tr><td colspan="5" style="text-align:center; color:var(--sc-text-muted);">Todavía no hay comunidades.</td></tr>
+        }
+        @for (c of comunidades(); track c.idComunidad) {
+          <tr>
+            <td>{{ c.nombre }}</td>
+            <td style="color:var(--sc-text-muted);">{{ c.descripcion || '-' }}</td>
+            <td class="sc-mono" style="font-size:12px; color:var(--sc-text-muted);">{{ c.latitud }}, {{ c.longitud }}</td>
+            <td>{{ c.cantidadSensores }}</td>
+            <td style="white-space:nowrap;">
+              @if (comunidadAEliminar() === c.idComunidad) {
+                <span style="font-size:12px; color:var(--sc-rojo); margin-right:6px;">¿Eliminar?</span>
+                <button class="sc-btn" type="button" style="color:var(--sc-rojo);" (click)="eliminarComunidad(c)">Sí, eliminar</button>
+                <button class="sc-btn" type="button" (click)="comunidadAEliminar.set(null)">No</button>
+              } @else {
+                <button class="sc-btn" type="button" (click)="editarComunidad(c)">Editar</button>
+                <button class="sc-btn" type="button" (click)="comunidadAEliminar.set(c.idComunidad)">Eliminar</button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:10px; font-size:11.5px; color:var(--sc-text-faint);">
+    Una comunidad solo se puede eliminar si no tiene sensores asignados.
+  </div>
+}
+
+<!-- ======================= SISTEMA ======================= -->
+@if (pestana() === 'sistema') {
+  <div class="sc-card" style="margin-bottom:14px;">
+    <div class="sc-display" style="font-size:13px; margin-bottom:6px;">Reiniciar el sistema de monitoreo</div>
+    <p style="font-size:12.5px; color:var(--sc-text-muted); margin:0 0 12px; line-height:1.5;">
+      Borra todas las <strong>lecturas</strong>, <strong>alertas</strong> y el <strong>historial de eventos</strong>,
+      y la simulación vuelve a empezar desde valores normales. Los sensores, las comunidades, los usuarios y la
+      bitácora se conservan (el reinicio queda registrado en la bitácora). Esta acción no se puede deshacer.
+    </p>
+
+    @if (!confirmandoReinicio()) {
+      <button class="sc-btn" type="button" style="color:var(--sc-rojo); border-color:rgba(216,72,63,0.5);"
+              (click)="confirmandoReinicio.set(true); resultadoReinicio.set(null)">
+        Reiniciar monitoreo…
+      </button>
+    } @else {
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <span style="font-size:12.5px; color:var(--sc-rojo);">¿Seguro? Se borrarán lecturas, alertas e historial.</span>
+        <button class="sc-btn sc-btn-primary" type="button" style="background:var(--sc-rojo); color:#fff;"
+                [disabled]="reiniciando()" (click)="reiniciar()">
+          {{ reiniciando() ? 'Reiniciando...' : 'Sí, reiniciar' }}
+        </button>
+        <button class="sc-btn" type="button" [disabled]="reiniciando()" (click)="confirmandoReinicio.set(false)">Cancelar</button>
+      </div>
+    }
+
+    @if (resultadoReinicio(); as r) {
+      <div style="margin-top:12px; font-size:12.5px; color:var(--sc-verde);" role="status">
+        Monitoreo reiniciado: {{ r.lecturasEliminadas }} lecturas, {{ r.alertasEliminadas }} alertas y
+        {{ r.eventosEliminados }} eventos eliminados.
+      </div>
+    }
+    @if (errorReinicio()) {
+      <div style="margin-top:12px; font-size:12.5px; color:var(--sc-rojo);">{{ errorReinicio() }}</div>
+    }
+  </div>
+
+  <div class="sc-card">
+    <div class="sc-display" style="font-size:13px; margin-bottom:6px;">Bitácora de acciones</div>
+    <p style="font-size:12.5px; color:var(--sc-text-muted); margin:0 0 12px;">
+      Quién inició sesión, creó sensores, atendió alertas o reinició el sistema.
+    </p>
+    <a class="sc-btn" routerLink="/bitacora">Abrir bitácora</a>
+  </div>
+}

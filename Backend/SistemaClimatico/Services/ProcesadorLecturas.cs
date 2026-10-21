@@ -100,7 +100,10 @@ public class ProcesadorLecturas
             FechaUltimaLectura = lectura.FechaHora,
             Nivel = evaluacion.Nivel,
             TipoFenomeno = evaluacion.TipoFenomeno,
-            Mensaje = evaluacion.Mensaje
+            Mensaje = evaluacion.Mensaje,
+            IdComunidad = sensor.IdComunidad,
+            Latitud = sensor.Latitud,
+            Longitud = sensor.Longitud
         });
 
         if (alerta is not null)

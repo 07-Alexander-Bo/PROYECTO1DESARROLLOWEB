@@ -19,17 +19,20 @@ public class SensoresController : ControllerBase
     private readonly BitacoraService _bitacora;
     private readonly ProcesadorLecturas _procesador;
     private readonly NotificadorTiempoReal _notificador;
+    private readonly SimuladorControl _simulador;
 
     public SensoresController(
         SistemaClimaticoContext db,
         BitacoraService bitacora,
         ProcesadorLecturas procesador,
-        NotificadorTiempoReal notificador)
+        NotificadorTiempoReal notificador,
+        SimuladorControl simulador)
     {
         _db = db;
         _bitacora = bitacora;
         _procesador = procesador;
         _notificador = notificador;
+        _simulador = simulador;
     }
 
     // GET api/sensores
@@ -52,7 +55,11 @@ public class SensoresController : ControllerBase
                 UnidadMedida = s.UnidadMedida,
                 Ubicacion = s.Ubicacion,
                 Activo = s.Activo,
-                FechaCreacion = s.FechaCreacion
+                FechaCreacion = s.FechaCreacion,
+                IdComunidad = s.IdComunidad,
+                NombreComunidad = s.IdComunidadNavigation != null ? s.IdComunidadNavigation.Nombre : null,
+                Latitud = s.Latitud,
+                Longitud = s.Longitud
             })
             .ToListAsync();
 
@@ -68,16 +75,7 @@ public class SensoresController : ControllerBase
         if (sensor is null)
             return NotFound(new { mensaje = $"No existe un sensor con id {id}." });
 
-        return Ok(new SensorDto
-        {
-            IdSensor = sensor.IdSensor,
-            Nombre = sensor.Nombre,
-            Tipo = sensor.Tipo,
-            UnidadMedida = sensor.UnidadMedida,
-            Ubicacion = sensor.Ubicacion,
-            Activo = sensor.Activo,
-            FechaCreacion = sensor.FechaCreacion
-        });
+        return Ok(await MapearAsync(sensor));
     }
 
     // POST api/sensores
@@ -97,8 +95,15 @@ public class SensoresController : ControllerBase
         if (string.IsNullOrWhiteSpace(dto.UnidadMedida))
             return BadRequest(new { mensaje = "La unidad de medida es obligatoria." });
 
+        var errorUbicacion = await ValidarUbicacionAsync(dto.IdComunidad, dto.Latitud, dto.Longitud);
+        if (errorUbicacion is not null)
+            return BadRequest(new { mensaje = errorUbicacion });
+
         var sensor = new Sensore
         {
+            IdComunidad = dto.IdComunidad,
+            Latitud = dto.Latitud,
+            Longitud = dto.Longitud,
             Nombre = dto.Nombre.Trim(),
             Tipo = dto.Tipo,
             UnidadMedida = dto.UnidadMedida.Trim(),
@@ -114,16 +119,7 @@ public class SensoresController : ControllerBase
             $"Se creó el sensor '{sensor.Nombre}' (id {sensor.IdSensor}, tipo {sensor.Tipo}).");
         await _notificador.SensoresActualizadosAsync();
 
-        var resultado = new SensorDto
-        {
-            IdSensor = sensor.IdSensor,
-            Nombre = sensor.Nombre,
-            Tipo = sensor.Tipo,
-            UnidadMedida = sensor.UnidadMedida,
-            Ubicacion = sensor.Ubicacion,
-            Activo = sensor.Activo,
-            FechaCreacion = sensor.FechaCreacion
-        };
+        var resultado = await MapearAsync(sensor);
 
         return CreatedAtAction(nameof(GetSensor), new { id = sensor.IdSensor }, resultado);
     }
@@ -146,10 +142,20 @@ public class SensoresController : ControllerBase
                 mensaje = $"Tipo de sensor inválido. Valores permitidos: {string.Join(", ", TiposSensor.Valores)}."
             });
 
+        if (string.IsNullOrWhiteSpace(dto.UnidadMedida))
+            return BadRequest(new { mensaje = "La unidad de medida es obligatoria." });
+
+        var errorUbicacion = await ValidarUbicacionAsync(dto.IdComunidad, dto.Latitud, dto.Longitud);
+        if (errorUbicacion is not null)
+            return BadRequest(new { mensaje = errorUbicacion });
+
         sensor.Nombre = dto.Nombre.Trim();
         sensor.Tipo = dto.Tipo;
         sensor.UnidadMedida = dto.UnidadMedida.Trim();
         sensor.Ubicacion = dto.Ubicacion?.Trim();
+        sensor.IdComunidad = dto.IdComunidad;
+        sensor.Latitud = dto.Latitud;
+        sensor.Longitud = dto.Longitud;
 
         await _db.SaveChangesAsync();
 
@@ -240,6 +246,9 @@ public class SensoresController : ControllerBase
         var resultado = await _procesador.RegistrarLecturaAsync(sensor, dto.Valor);
         var lectura = resultado.Lectura;
 
+        // El simulador continúa desde el valor que fijó la persona.
+        _simulador.ForzarValor(id, lectura.Valor);
+
         await _bitacora.RegistrarAsync("LECTURA_MANUAL",
             $"Lectura manual de {lectura.Valor} {sensor.UnidadMedida} en el sensor '{sensor.Nombre}' (id {id}).");
 
@@ -250,5 +259,50 @@ public class SensoresController : ControllerBase
             Valor = lectura.Valor,
             FechaHora = lectura.FechaHora
         });
+    }
+
+    private async Task<SensorDto> MapearAsync(Sensore s)
+    {
+        string? nombreComunidad = null;
+        if (s.IdComunidad.HasValue)
+        {
+            nombreComunidad = await _db.Comunidades
+                .Where(c => c.IdComunidad == s.IdComunidad.Value)
+                .Select(c => c.Nombre)
+                .FirstOrDefaultAsync();
+        }
+
+        return new SensorDto
+        {
+            IdSensor = s.IdSensor,
+            Nombre = s.Nombre,
+            Tipo = s.Tipo,
+            UnidadMedida = s.UnidadMedida,
+            Ubicacion = s.Ubicacion,
+            Activo = s.Activo,
+            FechaCreacion = s.FechaCreacion,
+            IdComunidad = s.IdComunidad,
+            NombreComunidad = nombreComunidad,
+            Latitud = s.Latitud,
+            Longitud = s.Longitud
+        };
+    }
+
+    // Devuelve un mensaje de error, o null si la comunidad y las coordenadas son válidas.
+    private async Task<string?> ValidarUbicacionAsync(int? idComunidad, decimal? latitud, decimal? longitud)
+    {
+        if (idComunidad.HasValue && !await _db.Comunidades.AnyAsync(c => c.IdComunidad == idComunidad.Value))
+            return "La comunidad indicada no existe.";
+
+        if (latitud.HasValue != longitud.HasValue)
+            return "Indica latitud y longitud juntas, o deja ambas vacías.";
+
+        if (latitud is < -90 or > 90)
+            return "La latitud debe estar entre -90 y 90.";
+
+        if (longitud is < -180 or > 180)
+            return "La longitud debe estar entre -180 y 180.";
+
+        return null;
     }
 }

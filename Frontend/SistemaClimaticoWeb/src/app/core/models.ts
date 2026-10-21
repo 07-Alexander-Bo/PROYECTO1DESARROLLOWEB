@@ -34,20 +34,71 @@ export interface SensorDto {
   ubicacion?: string | null;
   activo: boolean;
   fechaCreacion: string;
+  idComunidad?: number | null;
+  nombreComunidad?: string | null;
+  latitud?: number | null;
+  longitud?: number | null;
 }
 
+// Crear y editar un sensor usan los mismos campos.
 export interface CrearSensorDto {
   nombre: string;
   tipo: TipoSensor;
   unidadMedida: string;
   ubicacion?: string | null;
+  idComunidad?: number | null;
+  latitud?: number | null;
+  longitud?: number | null;
 }
 
-export interface ActualizarSensorDto {
+export type ActualizarSensorDto = CrearSensorDto;
+
+// ---------- Comunidades (Dtos/ComunidadDtos.cs) ----------
+export interface ComunidadDto {
+  idComunidad: number;
+  nombre: string;
+  descripcion?: string | null;
+  latitud: number;
+  longitud: number;
+  activa: boolean;
+  cantidadSensores: number;
+}
+
+export interface GuardarComunidadDto {
+  nombre: string;
+  descripcion?: string | null;
+  latitud: number;
+  longitud: number;
+}
+
+// ---------- Series para los graficos (GET /api/lecturas/series) ----------
+export interface PuntoLecturaDto {
+  fechaHora: string;
+  valor: number;
+}
+
+export interface SerieSensorDto {
+  idSensor: number;
   nombre: string;
   tipo: TipoSensor;
   unidadMedida: string;
-  ubicacion?: string | null;
+  idComunidad?: number | null;
+  puntos: PuntoLecturaDto[];
+}
+
+// ---------- Bitacora (Dtos/BitacoraDtos.cs) ----------
+export interface BitacoraDto {
+  idBitacora: number;
+  idUsuario?: number | null;
+  nombreUsuario?: string | null;
+  accion: string;
+  descripcion?: string | null;
+  fechaHora: string;
+}
+
+export interface UsuarioFiltroDto {
+  idUsuario: number;
+  nombreCompleto: string;
 }
 
 export interface CrearLecturaDto {
@@ -86,6 +137,9 @@ export interface EstadoSensorDto {
   nivel: NivelAlerta;
   tipoFenomeno?: string | null;
   mensaje: string;
+  idComunidad?: number | null;
+  latitud?: number | null;
+  longitud?: number | null;
 }
 
 // ---------- Historial (Dtos/HistorialEventoDtos.cs) ----------
@@ -128,3 +182,39 @@ export function nombreFenomeno(tipo?: string | null): string {
   if (!tipo) return '';
   return NOMBRE_FENOMENO[tipo] ?? tipo;
 }
+
+// Umbrales de riesgo por tipo de sensor, calcados de Services/MotorAlertas.cs.
+// Solo sirven para dibujar las lineas de referencia en los graficos: la decision
+// de generar una alerta la toma siempre el backend.
+export interface UmbralGrafico {
+  valor: number;
+  nivel: NivelAlerta;
+}
+
+export const UMBRALES_GRAFICO: Record<string, UmbralGrafico[]> = {
+  Temperatura: [
+    { valor: 0, nivel: 'Rojo' }, { valor: 3, nivel: 'Naranja' },
+    { valor: 35, nivel: 'Amarillo' }, { valor: 40, nivel: 'Naranja' }, { valor: 45, nivel: 'Rojo' },
+  ],
+  Humedad: [
+    { valor: 10, nivel: 'Rojo' }, { valor: 20, nivel: 'Naranja' }, { valor: 30, nivel: 'Amarillo' },
+  ],
+  Viento: [
+    { valor: 40, nivel: 'Amarillo' }, { valor: 60, nivel: 'Naranja' }, { valor: 90, nivel: 'Rojo' },
+  ],
+  Lluvia: [
+    { valor: 20, nivel: 'Amarillo' }, { valor: 50, nivel: 'Naranja' }, { valor: 100, nivel: 'Rojo' },
+  ],
+  NivelRio: [
+    { valor: 2, nivel: 'Amarillo' }, { valor: 3, nivel: 'Naranja' }, { valor: 4, nivel: 'Rojo' },
+  ],
+};
+
+export const ETIQUETA_TIPO_SENSOR: Record<string, string> = {
+  Temperatura: 'Temperatura',
+  Humedad: 'Humedad relativa',
+  Viento: 'Viento',
+  Lluvia: 'Lluvia',
+  NivelRio: 'Nivel del río',
+  Otro: 'Otro',
+};

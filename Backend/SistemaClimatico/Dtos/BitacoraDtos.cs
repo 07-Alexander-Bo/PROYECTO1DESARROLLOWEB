@@ -10,3 +10,10 @@ public class BitacoraDto
     public string? Descripcion { get; set; }
     public DateTime FechaHora { get; set; }
 }
+
+// Usuario para el filtro de la pantalla de bitácora
+public class UsuarioFiltroDto
+{
+    public int IdUsuario { get; set; }
+    public string NombreCompleto { get; set; } = null!;
+}

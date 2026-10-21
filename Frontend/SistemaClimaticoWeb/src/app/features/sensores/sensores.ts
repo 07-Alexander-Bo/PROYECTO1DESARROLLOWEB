@@ -60,7 +60,7 @@ export class Sensores implements OnInit {
       next: () => {
         this.guardandoLectura.set(null);
         this.valorLectura[s.idSensor] = null;
-        this.mensajeLectura.set({ id: s.idSensor, texto: 'Lectura registrada.' });
+        this.mensajeLectura.set({ id: s.idSensor, texto: 'Valor fijado.' });
         setTimeout(() => this.mensajeLectura.set(null), 3000);
       },
       error: () => this.guardandoLectura.set(null),

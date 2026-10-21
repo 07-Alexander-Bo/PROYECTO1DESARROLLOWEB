@@ -33,6 +33,9 @@ public class NotificadorTiempoReal
     public Task SimuladorAsync(bool activo)
         => EnviarAsync(EventosTiempoReal.SimuladorEstado, activo);
 
+    public Task MonitoreoReiniciadoAsync()
+        => EnviarAsync(EventosTiempoReal.MonitoreoReiniciado, null);
+
     private async Task EnviarAsync(string metodo, object? dato)
     {
         try

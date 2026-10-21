@@ -1,0 +1,12 @@
+:host { display: block; }
+
+.filtros { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: end; }
+.acciones-filtro { display: flex; gap: 8px; }
+
+.etiqueta {
+  display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; white-space: nowrap;
+  font-family: 'IBM Plex Mono', monospace; border: 1px solid var(--sc-border); color: var(--sc-text-muted);
+}
+.etiqueta.ok      { color: var(--sc-verde);    border-color: rgba(76, 175, 109, 0.4); }
+.etiqueta.info    { color: var(--sc-accent);   border-color: rgba(232, 163, 61, 0.4); }
+.etiqueta.peligro { color: var(--sc-rojo);     border-color: rgba(216, 72, 63, 0.45); }

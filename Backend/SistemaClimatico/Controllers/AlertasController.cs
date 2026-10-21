@@ -137,7 +137,10 @@ public class AlertasController : ControllerBase
                     FechaUltimaLectura = null,
                     Nivel = "Verde",
                     TipoFenomeno = null,
-                    Mensaje = "Sin lecturas registradas todavía."
+                    Mensaje = "Sin lecturas registradas todavía.",
+                    IdComunidad = sensor.IdComunidad,
+                    Latitud = sensor.Latitud,
+                    Longitud = sensor.Longitud
                 });
                 continue;
             }
@@ -154,7 +157,10 @@ public class AlertasController : ControllerBase
                 FechaUltimaLectura = ultimaLectura.FechaHora,
                 Nivel = evaluacion.Nivel,
                 TipoFenomeno = evaluacion.TipoFenomeno,
-                Mensaje = evaluacion.Mensaje
+                Mensaje = evaluacion.Mensaje,
+                IdComunidad = sensor.IdComunidad,
+                Latitud = sensor.Latitud,
+                Longitud = sensor.Longitud
             });
         }
 
